@@ -56,3 +56,33 @@ func TestCalculateContextUsage(t *testing.T) {
 		})
 	}
 }
+
+func TestCalculateCurrentHUDContextUsage(t *testing.T) {
+	got := CalculateCurrentHUDContextUsage(
+		/*inputTokens*/ 119642,
+		/*cachedInputTokens*/ 116608,
+		/*contextWindow*/ 258400,
+	)
+	want := ContextUsage{
+		UsedTokens:  236250,
+		TotalTokens: 258400,
+		Percent:     91,
+	}
+	if got != want {
+		t.Fatalf("CalculateCurrentHUDContextUsage() = %+v, want %+v", got, want)
+	}
+}
+
+func TestParseContextMode(t *testing.T) {
+	got, err := ParseContextMode("current-hud")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != ContextModeCurrentHUD {
+		t.Fatalf("ParseContextMode() = %q, want %q", got, ContextModeCurrentHUD)
+	}
+
+	if _, err := ParseContextMode("bad"); err != ErrInvalidContextMode {
+		t.Fatalf("ParseContextMode() error = %v, want %v", err, ErrInvalidContextMode)
+	}
+}

@@ -55,6 +55,7 @@ type Snapshot struct {
 type LoadOptions struct {
 	CodexHome   string
 	RolloutPath string
+	ContextMode ContextMode
 }
 
 func LoadSnapshot(options LoadOptions) (Snapshot, error) {
@@ -74,13 +75,13 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 		}
 	}
 
-	snapshot, err := ParseRolloutFile(rolloutPath)
+	snapshot, err := ParseRolloutFileWithContextMode(rolloutPath, options.ContextMode)
 	if err != nil {
 		return Snapshot{}, err
 	}
 	snapshot.RolloutPath = rolloutPath
 	snapshot.Config = config
-	snapshot.Model = SelectModel(snapshot.Model, config)
+	snapshot.Model = SelectModelForContextMode(snapshot.Model, config, options.ContextMode)
 	return snapshot, nil
 }
 
@@ -123,13 +124,17 @@ func FindLatestRollout(codexHome string) (string, error) {
 }
 
 func ParseRolloutFile(path string) (Snapshot, error) {
+	return ParseRolloutFileWithContextMode(path, ContextModeCodex)
+}
+
+func ParseRolloutFileWithContextMode(path string, mode ContextMode) (Snapshot, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return Snapshot{}, err
 	}
 	defer file.Close()
 
-	snapshot, err := ParseRollout(file)
+	snapshot, err := ParseRolloutWithContextMode(file, mode)
 	if err != nil {
 		return Snapshot{}, err
 	}
@@ -138,12 +143,16 @@ func ParseRolloutFile(path string) (Snapshot, error) {
 }
 
 func ParseRollout(reader io.Reader) (Snapshot, error) {
+	return ParseRolloutWithContextMode(reader, ContextModeCodex)
+}
+
+func ParseRolloutWithContextMode(reader io.Reader, mode ContextMode) (Snapshot, error) {
 	var snapshot Snapshot
 	buffered := bufio.NewReader(reader)
 	for {
 		line, err := buffered.ReadString('\n')
 		if len(strings.TrimSpace(line)) > 0 {
-			if parseErr := applyRolloutLine(&snapshot, []byte(line)); parseErr != nil {
+			if parseErr := applyRolloutLine(&snapshot, []byte(line), mode); parseErr != nil {
 				return Snapshot{}, parseErr
 			}
 		}
@@ -157,7 +166,7 @@ func ParseRollout(reader io.Reader) (Snapshot, error) {
 	return snapshot, nil
 }
 
-func applyRolloutLine(snapshot *Snapshot, line []byte) error {
+func applyRolloutLine(snapshot *Snapshot, line []byte, mode ContextMode) error {
 	var record struct {
 		Timestamp string          `json:"timestamp"`
 		Type      string          `json:"type"`
@@ -174,7 +183,7 @@ func applyRolloutLine(snapshot *Snapshot, line []byte) error {
 	case "turn_context":
 		return applyTurnContext(snapshot, record.Payload, eventTime)
 	case "event_msg":
-		return applyEventMsg(snapshot, record.Payload)
+		return applyEventMsg(snapshot, record.Payload, mode)
 	default:
 		return nil
 	}
@@ -251,7 +260,7 @@ func applyTurnContext(snapshot *Snapshot, payload json.RawMessage, eventTime tim
 	return nil
 }
 
-func applyEventMsg(snapshot *Snapshot, payload json.RawMessage) error {
+func applyEventMsg(snapshot *Snapshot, payload json.RawMessage, mode ContextMode) error {
 	var typed struct {
 		Type string `json:"type"`
 	}
@@ -261,19 +270,14 @@ func applyEventMsg(snapshot *Snapshot, payload json.RawMessage) error {
 	if typed.Type != "token_count" {
 		return nil
 	}
-	return applyTokenCount(snapshot, payload)
+	return applyTokenCount(snapshot, payload, mode)
 }
 
-func applyTokenCount(snapshot *Snapshot, payload json.RawMessage) error {
+func applyTokenCount(snapshot *Snapshot, payload json.RawMessage, mode ContextMode) error {
 	var tokenCount struct {
 		Info struct {
-			LastTokenUsage struct {
-				TotalTokens       int64 `json:"total_tokens"`
-				InputTokens       int64 `json:"input_tokens"`
-				CachedInputTokens int64 `json:"cached_input_tokens"`
-				OutputTokens      int64 `json:"output_tokens"`
-			} `json:"last_token_usage"`
-			ModelContextWindow int64 `json:"model_context_window"`
+			LastTokenUsage     TokenUsage `json:"last_token_usage"`
+			ModelContextWindow int64      `json:"model_context_window"`
 		} `json:"info"`
 		RateLimits struct {
 			Primary   rateLimitPayload `json:"primary"`
@@ -287,9 +291,10 @@ func applyTokenCount(snapshot *Snapshot, payload json.RawMessage) error {
 	primary := tokenCount.RateLimits.Primary.rateLimit()
 	secondary := tokenCount.RateLimits.Secondary.rateLimit()
 	snapshot.Tokens = TokenInfo{
-		Context: CalculateContextUsage(
-			tokenCount.Info.LastTokenUsage.TotalTokens,
+		Context: CalculateContextUsageForMode(
+			tokenCount.Info.LastTokenUsage,
 			tokenCount.Info.ModelContextWindow,
+			mode,
 		),
 		Primary:   primary,
 		Secondary: secondary,

@@ -20,6 +20,13 @@ go run ./cmd/codex-vitals -once
 go run ./cmd/codex-vitals
 ```
 
+To compare against a local HUD build that uses Codex TUI's current
+`input_tokens + cached_input_tokens` basis, render with:
+
+```sh
+go run ./cmd/codex-vitals -once -context-mode current-hud
+```
+
 By default it reads:
 
 - rollout JSONL files under `~/.codex/sessions`
@@ -29,7 +36,7 @@ By default it reads:
 
 Codex reserves `12000` baseline tokens. `codex-vitals` subtracts that baseline
 from both `last_token_usage.total_tokens` and `model_context_window`, then rounds
-the effective usage percentage.
+the effective usage percentage. This is the default `-context-mode codex`.
 
 ## Credits
 

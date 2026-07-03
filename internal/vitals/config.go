@@ -140,3 +140,10 @@ func SelectModel(turn ModelInfo, config Config) ModelInfo {
 	}
 	return turn
 }
+
+func SelectModelForContextMode(turn ModelInfo, config Config, mode ContextMode) ModelInfo {
+	if mode == ContextModeCurrentHUD && turn.HasTurn {
+		return turn
+	}
+	return SelectModel(turn, config)
+}

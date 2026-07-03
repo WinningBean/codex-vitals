@@ -14,6 +14,7 @@ import (
 func main() {
 	rolloutPath := flag.String("rollout", "", "path to a rollout JSONL file")
 	codexHome := flag.String("codex-home", "", "path to CODEX_HOME; defaults to $CODEX_HOME or ~/.codex")
+	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or current-hud")
 	interval := flag.Duration("interval", time.Second, "refresh interval")
 	once := flag.Bool("once", false, "render once and exit")
 	flag.Parse()
@@ -28,10 +29,15 @@ func main() {
 	if *interval <= 0 {
 		exitErr(fmt.Errorf("interval must be positive"))
 	}
+	contextMode, err := vitals.ParseContextMode(*contextModeValue)
+	if err != nil {
+		exitErr(err)
+	}
 
 	options := vitals.LoadOptions{
 		CodexHome:   *codexHome,
 		RolloutPath: *rolloutPath,
+		ContextMode: contextMode,
 	}
 	if *once {
 		fmt.Println(render(options, homeDir))
