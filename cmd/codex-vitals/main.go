@@ -15,6 +15,8 @@ func main() {
 	rolloutPath := flag.String("rollout", "", "path to a rollout JSONL file")
 	codexHome := flag.String("codex-home", "", "path to CODEX_HOME; defaults to $CODEX_HOME or ~/.codex")
 	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or current-hud")
+	styleValue := flag.String("style", string(vitals.RenderStyleCompact), "render style: compact or current-hud")
+	noColor := flag.Bool("no-color", false, "disable ANSI colors")
 	interval := flag.Duration("interval", time.Second, "refresh interval")
 	once := flag.Bool("once", false, "render once and exit")
 	flag.Parse()
@@ -33,6 +35,10 @@ func main() {
 	if err != nil {
 		exitErr(err)
 	}
+	style, err := vitals.ParseRenderStyle(*styleValue)
+	if err != nil {
+		exitErr(err)
+	}
 
 	options := vitals.LoadOptions{
 		CodexHome:   *codexHome,
@@ -40,7 +46,7 @@ func main() {
 		ContextMode: contextMode,
 	}
 	if *once {
-		fmt.Println(render(options, homeDir))
+		fmt.Println(render(options, homeDir, newRenderOptions(style, !*noColor)))
 		return
 	}
 
@@ -49,11 +55,12 @@ func main() {
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()
 
-	fmt.Print(render(options, homeDir))
+	renderOptions := newRenderOptions(style, !*noColor)
+	fmt.Print(render(options, homeDir, renderOptions))
 	for {
 		select {
 		case <-ticker.C:
-			fmt.Printf("\r\033[2K%s", render(options, homeDir))
+			fmt.Printf("\r\033[2K%s", render(options, homeDir, renderOptions))
 		case <-signals:
 			fmt.Println()
 			return
@@ -61,12 +68,19 @@ func main() {
 	}
 }
 
-func render(options vitals.LoadOptions, homeDir string) string {
+func render(options vitals.LoadOptions, homeDir string, renderOptions vitals.RenderOptions) string {
 	snapshot, err := vitals.LoadSnapshot(options)
 	if err != nil && !errors.Is(err, vitals.ErrNoRollout) {
 		return "codex-vitals: " + err.Error()
 	}
-	return vitals.RenderLine(snapshot, homeDir)
+	return vitals.RenderLineWithOptions(snapshot, homeDir, renderOptions)
+}
+
+func newRenderOptions(style vitals.RenderStyle, color bool) vitals.RenderOptions {
+	return vitals.RenderOptions{
+		Style: style,
+		Color: color,
+	}
 }
 
 func exitErr(err error) {

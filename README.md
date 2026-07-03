@@ -24,7 +24,7 @@ To compare against a local HUD build that uses Codex TUI's current
 `input_tokens + cached_input_tokens` basis, render with:
 
 ```sh
-go run ./cmd/codex-vitals -once -context-mode current-hud
+go run ./cmd/codex-vitals -once -context-mode current-hud -style current-hud
 ```
 
 By default it reads:

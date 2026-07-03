@@ -37,3 +37,60 @@ func TestRenderLine(t *testing.T) {
 		t.Fatalf("RenderLine() = %q, want %q", got, want)
 	}
 }
+
+func TestRenderCurrentHUDLine(t *testing.T) {
+	snapshot := Snapshot{
+		Session: SessionInfo{
+			CWD:       "/Users/wsb/my-project",
+			GitBranch: "main",
+		},
+		Model: ModelInfo{
+			Model:   "gpt-5.5",
+			Effort:  "xhigh",
+			HasTurn: true,
+		},
+		Tokens: TokenInfo{
+			Context: ContextUsage{
+				UsedTokens:  236250,
+				TotalTokens: 258400,
+				Percent:     91,
+			},
+			Primary: &RateLimit{
+				UsedPercent:   40,
+				WindowMinutes: 300,
+			},
+			Secondary: &RateLimit{
+				UsedPercent:   46,
+				WindowMinutes: 10080,
+			},
+			HasTokens: true,
+		},
+	}
+
+	got := RenderLineWithOptions(snapshot, "/Users/wsb", RenderOptions{
+		Style: RenderStyleCurrentHUD,
+		Color: false,
+	})
+	want := "gpt-5.5 xhigh · ~/my-project · Context 91% used · 5h 60% left · weekly 54% left"
+	if got != want {
+		t.Fatalf("RenderLineWithOptions() = %q, want %q", got, want)
+	}
+}
+
+func TestRenderCurrentHUDLineWithColors(t *testing.T) {
+	snapshot := Snapshot{
+		Model: ModelInfo{
+			Model:  "gpt-5.5",
+			Effort: "xhigh",
+		},
+	}
+
+	got := RenderLineWithOptions(snapshot, "/Users/wsb", RenderOptions{
+		Style: RenderStyleCurrentHUD,
+		Color: true,
+	})
+	want := "\x1b[38;2;148;226;213mgpt-5.5 xhigh\x1b[0m"
+	if got != want {
+		t.Fatalf("RenderLineWithOptions() = %q, want %q", got, want)
+	}
+}

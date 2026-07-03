@@ -9,7 +9,49 @@ import (
 
 const defaultContextBarWidth = 6
 
+type RenderStyle string
+
+const (
+	RenderStyleCompact    RenderStyle = "compact"
+	RenderStyleCurrentHUD RenderStyle = "current-hud"
+)
+
+type RenderOptions struct {
+	Style RenderStyle
+	Color bool
+}
+
+func ParseRenderStyle(value string) (RenderStyle, error) {
+	switch RenderStyle(value) {
+	case "", RenderStyleCompact:
+		return RenderStyleCompact, nil
+	case RenderStyleCurrentHUD:
+		return RenderStyleCurrentHUD, nil
+	default:
+		return "", ErrInvalidRenderStyle
+	}
+}
+
+var ErrInvalidRenderStyle = errInvalidRenderStyle{}
+
+type errInvalidRenderStyle struct{}
+
+func (errInvalidRenderStyle) Error() string {
+	return "style must be one of: compact, current-hud"
+}
+
 func RenderLine(snapshot Snapshot, homeDir string) string {
+	return RenderLineWithOptions(snapshot, homeDir, RenderOptions{Style: RenderStyleCompact})
+}
+
+func RenderLineWithOptions(snapshot Snapshot, homeDir string, options RenderOptions) string {
+	if options.Style == RenderStyleCurrentHUD {
+		return renderCurrentHUDLine(snapshot, homeDir, options.Color)
+	}
+	return renderCompactLine(snapshot, homeDir)
+}
+
+func renderCompactLine(snapshot Snapshot, homeDir string) string {
 	var segments []string
 
 	model := formatModel(snapshot.Model)
@@ -43,6 +85,75 @@ func RenderLine(snapshot Snapshot, homeDir string) string {
 		return "codex-vitals: waiting for Codex session data"
 	}
 	return strings.Join(segments, " · ")
+}
+
+func renderCurrentHUDLine(snapshot Snapshot, homeDir string, color bool) string {
+	var segments []coloredSegment
+
+	model := formatModel(snapshot.Model)
+	if model != "" {
+		segments = append(segments, coloredSegment{text: model, rgb: rgb{148, 226, 213}})
+	}
+	if snapshot.Session.CWD != "" {
+		segments = append(segments, coloredSegment{
+			text: abbreviateHome(snapshot.Session.CWD, homeDir),
+			rgb:  rgb{166, 173, 200},
+		})
+	}
+	if snapshot.Tokens.HasTokens {
+		segments = append(segments, coloredSegment{
+			text: fmt.Sprintf("Context %d%% used", snapshot.Tokens.Context.Percent),
+			rgb:  rgb{245, 194, 231},
+		})
+	}
+	if snapshot.Tokens.Primary != nil {
+		segments = append(segments, coloredSegment{
+			text: fmt.Sprintf("5h %.0f%% left", remainingPercent(snapshot.Tokens.Primary.UsedPercent)),
+			rgb:  rgb{180, 190, 254},
+		})
+	}
+	if snapshot.Tokens.Secondary != nil {
+		segments = append(segments, coloredSegment{
+			text: fmt.Sprintf("weekly %.0f%% left", remainingPercent(snapshot.Tokens.Secondary.UsedPercent)),
+			rgb:  rgb{249, 226, 175},
+		})
+	}
+
+	if len(segments) == 0 {
+		return "codex-vitals: waiting for Codex session data"
+	}
+	return joinColoredSegments(segments, color)
+}
+
+type coloredSegment struct {
+	text string
+	rgb  rgb
+}
+
+type rgb struct {
+	red   int
+	green int
+	blue  int
+}
+
+func joinColoredSegments(segments []coloredSegment, color bool) string {
+	rendered := make([]string, 0, len(segments))
+	for _, segment := range segments {
+		if color {
+			rendered = append(rendered, colorize(segment.text, segment.rgb))
+		} else {
+			rendered = append(rendered, segment.text)
+		}
+	}
+	separator := " · "
+	if color {
+		separator = "\x1b[2m · \x1b[0m"
+	}
+	return strings.Join(rendered, separator)
+}
+
+func colorize(text string, color rgb) string {
+	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", color.red, color.green, color.blue, text)
 }
 
 func formatModel(model ModelInfo) string {
