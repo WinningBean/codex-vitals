@@ -8,6 +8,7 @@ import (
 )
 
 const defaultContextBarWidth = 6
+const answerFooterBarWidth = 10
 
 type RenderStyle string
 
@@ -133,51 +134,79 @@ func renderCurrentHUDLine(snapshot Snapshot, homeDir string, color bool) string 
 }
 
 func renderAnswerFooter(snapshot Snapshot, homeDir string, color bool) string {
-	lines := make([]string, 0, 5)
+	lines := make([]string, 0, 6)
 
 	model := formatModel(snapshot.Model)
 	if model != "" {
 		lines = append(lines, colorizeIf("🤖 "+model, rgb{148, 226, 213}, color))
 	}
 
-	var location []string
 	if snapshot.Session.GitBranch != "" {
-		location = append(location, colorizeIf("🌿 "+snapshot.Session.GitBranch, rgb{166, 173, 200}, color))
+		lines = append(lines, colorizeIf("🌿 "+snapshot.Session.GitBranch, rgb{166, 173, 200}, color))
 	}
 	if snapshot.Session.CWD != "" {
-		location = append(location, colorizeIf("📁 "+abbreviateHome(snapshot.Session.CWD, homeDir), rgb{166, 173, 200}, color))
-	}
-	if len(location) > 0 {
-		lines = append(lines, strings.Join(location, dimSeparator(color)))
+		lines = append(lines, colorizeIf("📁 "+abbreviateHome(snapshot.Session.CWD, homeDir), rgb{166, 173, 200}, color))
 	}
 
 	if snapshot.Tokens.HasTokens {
 		context := snapshot.Tokens.Context
-		line := fmt.Sprintf(
-			"🧠 Context %s %d%% used (%s/%s)",
-			RenderBar(context.Percent, defaultContextBarWidth),
+		lines = append(lines, renderAnswerFooterMetric(
+			"🧠",
+			"Context",
 			context.Percent,
-			FormatTokenCount(context.UsedTokens),
-			FormatTokenCount(context.TotalTokens),
-		)
-		lines = append(lines, colorizeIf(line, rgb{245, 194, 231}, color))
+			"used",
+			fmt.Sprintf("(%s/%s)", FormatTokenCount(context.UsedTokens), FormatTokenCount(context.TotalTokens)),
+			rgb{245, 194, 231},
+			color,
+		))
 	}
 
-	var limits []string
 	if snapshot.Tokens.Primary != nil {
-		limits = append(limits, colorizeIf(fmt.Sprintf("⏱ 5h %.0f%% left", remainingPercent(snapshot.Tokens.Primary.UsedPercent)), rgb{180, 190, 254}, color))
+		lines = append(lines, renderAnswerFooterMetric(
+			"⏱",
+			"5h",
+			int(math.Round(remainingPercent(snapshot.Tokens.Primary.UsedPercent))),
+			"left",
+			"",
+			rgb{180, 190, 254},
+			color,
+		))
 	}
 	if snapshot.Tokens.Secondary != nil {
-		limits = append(limits, colorizeIf(fmt.Sprintf("📅 weekly %.0f%% left", remainingPercent(snapshot.Tokens.Secondary.UsedPercent)), rgb{249, 226, 175}, color))
-	}
-	if len(limits) > 0 {
-		lines = append(lines, strings.Join(limits, dimSeparator(color)))
+		lines = append(lines, renderAnswerFooterMetric(
+			"📅",
+			"weekly",
+			int(math.Round(remainingPercent(snapshot.Tokens.Secondary.UsedPercent))),
+			"left",
+			"",
+			rgb{249, 226, 175},
+			color,
+		))
 	}
 
 	if len(lines) == 0 {
 		return "codex-vitals: waiting for Codex session data"
 	}
 	return strings.Join(lines, "\n")
+}
+
+func renderAnswerFooterMetric(icon string, label string, percent int, suffix string, extra string, color rgb, useColor bool) string {
+	prefix := fmt.Sprintf("%s %-7s", icon, label)
+	bar := RenderBar(percent, answerFooterBarWidth)
+	if useColor {
+		bar = renderColoredBar(percent, answerFooterBarWidth, color)
+		prefix = colorize(prefix, color)
+		suffix = colorize(fmt.Sprintf("%3d%% %s", percent, suffix), color)
+		if extra != "" {
+			extra = colorize(" "+extra, color)
+		}
+		return prefix + " " + bar + " " + suffix + extra
+	}
+	line := fmt.Sprintf("%s %s %3d%% %s", prefix, bar, percent, suffix)
+	if extra != "" {
+		line += " " + extra
+	}
+	return line
 }
 
 type coloredSegment struct {
@@ -211,6 +240,26 @@ func colorize(text string, color rgb) string {
 	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", color.red, color.green, color.blue, text)
 }
 
+func renderColoredBar(percent int, width int, color rgb) string {
+	if width <= 0 {
+		return ""
+	}
+	if percent < 0 {
+		percent = 0
+	}
+	if percent > 100 {
+		percent = 100
+	}
+	filled := int(math.Round(float64(percent) / 100 * float64(width)))
+	if filled < 0 {
+		filled = 0
+	}
+	if filled > width {
+		filled = width
+	}
+	return colorize(strings.Repeat("█", filled), color) + dimText(strings.Repeat("░", width-filled))
+}
+
 func colorizeIf(text string, color rgb, enabled bool) string {
 	if !enabled {
 		return text
@@ -223,6 +272,13 @@ func dimSeparator(color bool) string {
 		return "\x1b[2m · \x1b[0m"
 	}
 	return " · "
+}
+
+func dimText(text string) string {
+	if text == "" {
+		return ""
+	}
+	return "\x1b[2m" + text + "\x1b[0m"
 }
 
 func formatModel(model ModelInfo) string {
