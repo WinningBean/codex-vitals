@@ -94,3 +94,39 @@ func TestRenderCurrentHUDLineWithColors(t *testing.T) {
 		t.Fatalf("RenderLineWithOptions() = %q, want %q", got, want)
 	}
 }
+
+func TestRenderAnswerFooter(t *testing.T) {
+	snapshot := Snapshot{
+		Session: SessionInfo{
+			CWD:       "/Users/wsb/my-project",
+			GitBranch: "main",
+		},
+		Model: ModelInfo{
+			Model:  "gpt-5.5",
+			Effort: "xhigh",
+		},
+		Tokens: TokenInfo{
+			Context: ContextUsage{
+				UsedTokens:  236250,
+				TotalTokens: 258400,
+				Percent:     91,
+			},
+			Primary: &RateLimit{
+				UsedPercent: 40,
+			},
+			Secondary: &RateLimit{
+				UsedPercent: 46,
+			},
+			HasTokens: true,
+		},
+	}
+
+	got := RenderLineWithOptions(snapshot, "/Users/wsb", RenderOptions{
+		Style: RenderStyleAnswerFooter,
+		Color: false,
+	})
+	want := "🤖 gpt-5.5 xhigh\n🌿 main · 📁 ~/my-project\n🧠 Context █████░ 91% used (236k/258k)\n⏱ 5h 60% left · 📅 weekly 54% left"
+	if got != want {
+		t.Fatalf("RenderLineWithOptions() = %q, want %q", got, want)
+	}
+}

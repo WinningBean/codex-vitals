@@ -15,7 +15,7 @@ func main() {
 	rolloutPath := flag.String("rollout", "", "path to a rollout JSONL file")
 	codexHome := flag.String("codex-home", "", "path to CODEX_HOME; defaults to $CODEX_HOME or ~/.codex")
 	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or current-hud")
-	styleValue := flag.String("style", string(vitals.RenderStyleCompact), "render style: compact or current-hud")
+	styleValue := flag.String("style", string(vitals.RenderStyleCompact), "render style: compact, current-hud, or answer-footer")
 	noColor := flag.Bool("no-color", false, "disable ANSI colors")
 	interval := flag.Duration("interval", time.Second, "refresh interval")
 	once := flag.Bool("once", false, "render once and exit")

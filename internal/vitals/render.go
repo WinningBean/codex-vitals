@@ -12,8 +12,9 @@ const defaultContextBarWidth = 6
 type RenderStyle string
 
 const (
-	RenderStyleCompact    RenderStyle = "compact"
-	RenderStyleCurrentHUD RenderStyle = "current-hud"
+	RenderStyleCompact      RenderStyle = "compact"
+	RenderStyleCurrentHUD   RenderStyle = "current-hud"
+	RenderStyleAnswerFooter RenderStyle = "answer-footer"
 )
 
 type RenderOptions struct {
@@ -27,6 +28,8 @@ func ParseRenderStyle(value string) (RenderStyle, error) {
 		return RenderStyleCompact, nil
 	case RenderStyleCurrentHUD:
 		return RenderStyleCurrentHUD, nil
+	case RenderStyleAnswerFooter:
+		return RenderStyleAnswerFooter, nil
 	default:
 		return "", ErrInvalidRenderStyle
 	}
@@ -37,7 +40,7 @@ var ErrInvalidRenderStyle = errInvalidRenderStyle{}
 type errInvalidRenderStyle struct{}
 
 func (errInvalidRenderStyle) Error() string {
-	return "style must be one of: compact, current-hud"
+	return "style must be one of: compact, current-hud, answer-footer"
 }
 
 func RenderLine(snapshot Snapshot, homeDir string) string {
@@ -45,10 +48,14 @@ func RenderLine(snapshot Snapshot, homeDir string) string {
 }
 
 func RenderLineWithOptions(snapshot Snapshot, homeDir string, options RenderOptions) string {
-	if options.Style == RenderStyleCurrentHUD {
+	switch options.Style {
+	case RenderStyleCurrentHUD:
 		return renderCurrentHUDLine(snapshot, homeDir, options.Color)
+	case RenderStyleAnswerFooter:
+		return renderAnswerFooter(snapshot, homeDir, options.Color)
+	default:
+		return renderCompactLine(snapshot, homeDir)
 	}
-	return renderCompactLine(snapshot, homeDir)
 }
 
 func renderCompactLine(snapshot Snapshot, homeDir string) string {
@@ -125,6 +132,54 @@ func renderCurrentHUDLine(snapshot Snapshot, homeDir string, color bool) string 
 	return joinColoredSegments(segments, color)
 }
 
+func renderAnswerFooter(snapshot Snapshot, homeDir string, color bool) string {
+	lines := make([]string, 0, 5)
+
+	model := formatModel(snapshot.Model)
+	if model != "" {
+		lines = append(lines, colorizeIf("🤖 "+model, rgb{148, 226, 213}, color))
+	}
+
+	var location []string
+	if snapshot.Session.GitBranch != "" {
+		location = append(location, colorizeIf("🌿 "+snapshot.Session.GitBranch, rgb{166, 173, 200}, color))
+	}
+	if snapshot.Session.CWD != "" {
+		location = append(location, colorizeIf("📁 "+abbreviateHome(snapshot.Session.CWD, homeDir), rgb{166, 173, 200}, color))
+	}
+	if len(location) > 0 {
+		lines = append(lines, strings.Join(location, dimSeparator(color)))
+	}
+
+	if snapshot.Tokens.HasTokens {
+		context := snapshot.Tokens.Context
+		line := fmt.Sprintf(
+			"🧠 Context %s %d%% used (%s/%s)",
+			RenderBar(context.Percent, defaultContextBarWidth),
+			context.Percent,
+			FormatTokenCount(context.UsedTokens),
+			FormatTokenCount(context.TotalTokens),
+		)
+		lines = append(lines, colorizeIf(line, rgb{245, 194, 231}, color))
+	}
+
+	var limits []string
+	if snapshot.Tokens.Primary != nil {
+		limits = append(limits, colorizeIf(fmt.Sprintf("⏱ 5h %.0f%% left", remainingPercent(snapshot.Tokens.Primary.UsedPercent)), rgb{180, 190, 254}, color))
+	}
+	if snapshot.Tokens.Secondary != nil {
+		limits = append(limits, colorizeIf(fmt.Sprintf("📅 weekly %.0f%% left", remainingPercent(snapshot.Tokens.Secondary.UsedPercent)), rgb{249, 226, 175}, color))
+	}
+	if len(limits) > 0 {
+		lines = append(lines, strings.Join(limits, dimSeparator(color)))
+	}
+
+	if len(lines) == 0 {
+		return "codex-vitals: waiting for Codex session data"
+	}
+	return strings.Join(lines, "\n")
+}
+
 type coloredSegment struct {
 	text string
 	rgb  rgb
@@ -154,6 +209,20 @@ func joinColoredSegments(segments []coloredSegment, color bool) string {
 
 func colorize(text string, color rgb) string {
 	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", color.red, color.green, color.blue, text)
+}
+
+func colorizeIf(text string, color rgb, enabled bool) string {
+	if !enabled {
+		return text
+	}
+	return colorize(text, color)
+}
+
+func dimSeparator(color bool) string {
+	if color {
+		return "\x1b[2m · \x1b[0m"
+	}
+	return " · "
 }
 
 func formatModel(model ModelInfo) string {

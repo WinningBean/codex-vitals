@@ -27,6 +27,12 @@ To compare against a local HUD build that uses Codex TUI's current
 go run ./cmd/codex-vitals -once -context-mode current-hud -style current-hud
 ```
 
+For a multi-line terminal footer with emojis and a context bar:
+
+```sh
+go run ./cmd/codex-vitals -once -context-mode current-hud -style answer-footer
+```
+
 By default it reads:
 
 - rollout JSONL files under `~/.codex/sessions`
