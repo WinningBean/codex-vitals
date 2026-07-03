@@ -38,10 +38,11 @@ type RateLimit struct {
 }
 
 type TokenInfo struct {
-	Context   ContextUsage
-	Primary   *RateLimit
-	Secondary *RateLimit
-	HasTokens bool
+	Context            ContextUsage
+	SessionTotalTokens int64
+	Primary            *RateLimit
+	Secondary          *RateLimit
+	HasTokens          bool
 }
 
 type Snapshot struct {
@@ -50,6 +51,8 @@ type Snapshot struct {
 	Model       ModelInfo
 	Tokens      TokenInfo
 	Config      Config
+	StartedAt   time.Time
+	EndedAt     time.Time
 }
 
 type LoadOptions struct {
@@ -177,6 +180,14 @@ func applyRolloutLine(snapshot *Snapshot, line []byte, mode ContextMode) error {
 	}
 
 	eventTime := parseEventTime(record.Timestamp)
+	if !eventTime.IsZero() {
+		if snapshot.StartedAt.IsZero() || eventTime.Before(snapshot.StartedAt) {
+			snapshot.StartedAt = eventTime
+		}
+		if snapshot.EndedAt.IsZero() || eventTime.After(snapshot.EndedAt) {
+			snapshot.EndedAt = eventTime
+		}
+	}
 	switch record.Type {
 	case "session_meta":
 		return applySessionMeta(snapshot, record.Payload)
@@ -277,6 +288,7 @@ func applyTokenCount(snapshot *Snapshot, payload json.RawMessage, mode ContextMo
 	var tokenCount struct {
 		Info struct {
 			LastTokenUsage     TokenUsage `json:"last_token_usage"`
+			TotalTokenUsage    TokenUsage `json:"total_token_usage"`
 			ModelContextWindow int64      `json:"model_context_window"`
 		} `json:"info"`
 		RateLimits struct {
@@ -290,15 +302,21 @@ func applyTokenCount(snapshot *Snapshot, payload json.RawMessage, mode ContextMo
 
 	primary := tokenCount.RateLimits.Primary.rateLimit()
 	secondary := tokenCount.RateLimits.Secondary.rateLimit()
+	totalUsage := tokenCount.Info.TotalTokenUsage
+	sessionTotalTokens := totalUsage.InputTokens + totalUsage.OutputTokens + totalUsage.ReasoningOutputTokens
+	if sessionTotalTokens == 0 {
+		sessionTotalTokens = totalUsage.TotalTokens
+	}
 	snapshot.Tokens = TokenInfo{
 		Context: CalculateContextUsageForMode(
 			tokenCount.Info.LastTokenUsage,
 			tokenCount.Info.ModelContextWindow,
 			mode,
 		),
-		Primary:   primary,
-		Secondary: secondary,
-		HasTokens: true,
+		SessionTotalTokens: sessionTotalTokens,
+		Primary:            primary,
+		Secondary:          secondary,
+		HasTokens:          true,
 	}
 	return nil
 }

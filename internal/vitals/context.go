@@ -20,10 +20,11 @@ type ContextUsage struct {
 }
 
 type TokenUsage struct {
-	TotalTokens       int64 `json:"total_tokens"`
-	InputTokens       int64 `json:"input_tokens"`
-	CachedInputTokens int64 `json:"cached_input_tokens"`
-	OutputTokens      int64 `json:"output_tokens"`
+	TotalTokens           int64 `json:"total_tokens"`
+	InputTokens           int64 `json:"input_tokens"`
+	CachedInputTokens     int64 `json:"cached_input_tokens"`
+	OutputTokens          int64 `json:"output_tokens"`
+	ReasoningOutputTokens int64 `json:"reasoning_output_tokens"`
 }
 
 func ParseContextMode(value string) (ContextMode, error) {

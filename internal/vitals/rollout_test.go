@@ -14,7 +14,7 @@ func TestParseRolloutUsesLatestRelevantEvents(t *testing.T) {
 {"timestamp":"2026-07-03T09:00:00Z","type":"session_meta","payload":{"id":"session-1","cwd":"/Users/wsb/project","model_provider":"openai","cli_version":"1.2.3","git":{"branch":"main","commit_hash":"abc123"}}}
 {"timestamp":"2026-07-03T09:01:00Z","type":"turn_context","payload":{"model":"gpt-5","effort":"high","cwd":"/Users/wsb/project"}}
 {"timestamp":"2026-07-03T09:02:00Z","type":"turn_context","payload":{"model":"gpt-5.5","effort":"xhigh","cwd":"/Users/wsb/project"}}
-{"timestamp":"2026-07-03T09:03:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":73305,"input_tokens":70000,"cached_input_tokens":1000,"output_tokens":3305},"total_token_usage":{"total_tokens":73305},"model_context_window":258400},"rate_limits":{"primary":{"used_percent":1,"window_minutes":300,"resets_at":1783072800},"secondary":{"used_percent":26,"window_minutes":10080,"resets_at":1783677600}}}}
+{"timestamp":"2026-07-03T09:03:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":73305,"input_tokens":70000,"cached_input_tokens":1000,"output_tokens":3305},"total_token_usage":{"total_tokens":73305,"input_tokens":70000,"output_tokens":3305},"model_context_window":258400},"rate_limits":{"primary":{"used_percent":1,"window_minutes":300,"resets_at":1783072800},"secondary":{"used_percent":26,"window_minutes":10080,"resets_at":1783677600}}}}
 `)
 
 	got, err := ParseRollout(input)
@@ -43,6 +43,7 @@ func TestParseRolloutUsesLatestRelevantEvents(t *testing.T) {
 				TotalTokens: 246400,
 				Percent:     25,
 			},
+			SessionTotalTokens: 73305,
 			Primary: &RateLimit{
 				UsedPercent:   1,
 				WindowMinutes: 300,
@@ -55,6 +56,8 @@ func TestParseRolloutUsesLatestRelevantEvents(t *testing.T) {
 			},
 			HasTokens: true,
 		},
+		StartedAt: time.Date(2026, time.July, 3, 9, 0, 0, 0, time.UTC),
+		EndedAt:   time.Date(2026, time.July, 3, 9, 3, 0, 0, time.UTC),
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("ParseRollout() = %+v, want %+v", got, want)
@@ -65,7 +68,7 @@ func TestParseRolloutCurrentHUDContextMode(t *testing.T) {
 	input := strings.NewReader(`
 {"timestamp":"2026-07-03T09:00:00Z","type":"session_meta","payload":{"id":"session-1","cwd":"/Users/wsb/project","model_provider":"openai","cli_version":"1.2.3","git":{"branch":"main","commit_hash":"abc123"}}}
 {"timestamp":"2026-07-03T09:02:00Z","type":"turn_context","payload":{"model":"gpt-5.5","effort":"xhigh","cwd":"/Users/wsb/project"}}
-{"timestamp":"2026-07-03T09:03:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":73305,"input_tokens":70000,"cached_input_tokens":1000,"output_tokens":3305},"total_token_usage":{"total_tokens":73305},"model_context_window":258400},"rate_limits":{"primary":{"used_percent":1,"window_minutes":300,"resets_at":1783072800},"secondary":{"used_percent":26,"window_minutes":10080,"resets_at":1783677600}}}}
+{"timestamp":"2026-07-03T09:03:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":73305,"input_tokens":70000,"cached_input_tokens":1000,"output_tokens":3305},"total_token_usage":{"total_tokens":73305,"input_tokens":70000,"output_tokens":3305},"model_context_window":258400},"rate_limits":{"primary":{"used_percent":1,"window_minutes":300,"resets_at":1783072800},"secondary":{"used_percent":26,"window_minutes":10080,"resets_at":1783677600}}}}
 `)
 
 	got, err := ParseRolloutWithContextMode(input, ContextModeCurrentHUD)
