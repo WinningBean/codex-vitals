@@ -58,32 +58,53 @@ func CalculateContextUsageForMode(usage TokenUsage, contextWindow int64, mode Co
 }
 
 func CalculateContextUsage(totalTokens int64, contextWindow int64) ContextUsage {
-	effectiveWindow := contextWindow - baselineTokens
-	if effectiveWindow <= 0 {
+	if contextWindow <= 0 {
 		return ContextUsage{}
 	}
 
-	used := totalTokens - baselineTokens
-	if used < 0 {
-		used = 0
-	}
-	if used > effectiveWindow {
-		used = effectiveWindow
-	}
-
-	percent := int(math.Round(float64(used) / float64(effectiveWindow) * 100))
-	if percent < 0 {
-		percent = 0
-	}
-	if percent > 100 {
-		percent = 100
+	// Small window: subtracting the baseline would make the denominator
+	// invalid (effective window <= 0), which otherwise reports a misleading
+	// 0% (0/0). Fall back to the raw bounded ratio for these models.
+	if contextWindow <= baselineTokens {
+		used := clampInt64(totalTokens, 0, contextWindow)
+		return ContextUsage{
+			UsedTokens:  used,
+			TotalTokens: contextWindow,
+			Percent:     percentOf(used, contextWindow),
+		}
 	}
 
+	effectiveWindow := contextWindow - baselineTokens
+	used := clampInt64(totalTokens-baselineTokens, 0, effectiveWindow)
 	return ContextUsage{
 		UsedTokens:  used,
 		TotalTokens: effectiveWindow,
-		Percent:     percent,
+		Percent:     percentOf(used, effectiveWindow),
 	}
+}
+
+func clampInt64(value, min, max int64) int64 {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
+}
+
+func percentOf(used, total int64) int {
+	if total <= 0 {
+		return 0
+	}
+	percent := int(math.Round(float64(used) / float64(total) * 100))
+	if percent < 0 {
+		return 0
+	}
+	if percent > 100 {
+		return 100
+	}
+	return percent
 }
 
 func CalculateCurrentHUDContextUsage(inputTokens int64, cachedInputTokens int64, contextWindow int64) ContextUsage {

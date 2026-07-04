@@ -40,9 +40,70 @@ func TestCalculateContextUsage(t *testing.T) {
 			},
 		},
 		{
-			name:          "degenerate window is zero",
+			name:          "large window mid usage",
+			totalTokens:   106000,
+			contextWindow: 200000,
+			want: ContextUsage{
+				UsedTokens:  94000,
+				TotalTokens: 188000,
+				Percent:     50,
+			},
+		},
+		{
+			// window <= baseline: raw bounded ratio, not a bogus 0% (0/0).
+			name:          "small window half used",
+			totalTokens:   4000,
+			contextWindow: 8000,
+			want: ContextUsage{
+				UsedTokens:  4000,
+				TotalTokens: 8000,
+				Percent:     50,
+			},
+		},
+		{
+			name:          "small window empty",
+			totalTokens:   0,
+			contextWindow: 8000,
+			want: ContextUsage{
+				UsedTokens:  0,
+				TotalTokens: 8000,
+				Percent:     0,
+			},
+		},
+		{
+			name:          "window equals baseline uses raw ratio",
 			totalTokens:   12000,
 			contextWindow: 12000,
+			want: ContextUsage{
+				UsedTokens:  12000,
+				TotalTokens: 12000,
+				Percent:     100,
+			},
+		},
+		{
+			name:          "window just above baseline empty",
+			totalTokens:   12000,
+			contextWindow: 12001,
+			want: ContextUsage{
+				UsedTokens:  0,
+				TotalTokens: 1,
+				Percent:     0,
+			},
+		},
+		{
+			name:          "window just above baseline full",
+			totalTokens:   12001,
+			contextWindow: 12001,
+			want: ContextUsage{
+				UsedTokens:  1,
+				TotalTokens: 1,
+				Percent:     100,
+			},
+		},
+		{
+			name:          "zero window is empty",
+			totalTokens:   1000,
+			contextWindow: 0,
 			want:          ContextUsage{},
 		},
 	}
