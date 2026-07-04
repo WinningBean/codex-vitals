@@ -85,7 +85,7 @@ Colors show in a real terminal; GitHub may not render ANSI colors in the text bl
   📂 ~/Documents/Github/codex-vitals 🌿(main) 🧾 2.1M tokens ⏰ 42m
   🧠 Context  ██████████░░░░░░░░░░ 49% used (126k/258k)
   🚀 Usage 5H █████████████░░░░░░░ 67% (Reset 2h33m left)
-  ⭐ Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
+  📅 Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
 ```
 
 ```bash
@@ -128,7 +128,7 @@ codex-vitals -once
 | ⏰ **Time** | Elapsed time since the session started |
 | 🧠 **Context** | Context-window usage percentage and token count |
 | 🚀 **Usage 5H** | 5-hour usage limit and time to reset |
-| ⭐ **Usage 7D** | Weekly usage limit and reset time |
+| 📅 **Usage 7D** | Weekly usage limit and reset time |
 
 ---
 

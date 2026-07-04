@@ -202,7 +202,7 @@ func renderAnswerFooter(snapshot Snapshot, homeDir string, color bool) string {
 	}
 	if snapshot.Tokens.Secondary != nil {
 		lines = append(lines, renderAnswerFooterUsage(
-			"⭐",
+			"📅",
 			"Usage 7D",
 			int(math.Round(snapshot.Tokens.Secondary.UsedPercent)),
 			"",

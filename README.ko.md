@@ -85,7 +85,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -style answer-footer
   📂 ~/Documents/Github/codex-vitals 🌿(main) 🧾 2.1M tokens ⏰ 42m
   🧠 Context  ██████████░░░░░░░░░░ 49% used (126k/258k)
   🚀 Usage 5H █████████████░░░░░░░ 67% (Reset 2h33m left)
-  ⭐ Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
+  📅 Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
 ```
 
 ```bash
@@ -128,7 +128,7 @@ codex-vitals -once
 | ⏰ **Time** | session 시작부터 현재까지의 경과 시간 |
 | 🧠 **Context** | context-window 사용률과 token count |
 | 🚀 **Usage 5H** | 5시간 usage limit 사용률과 reset까지 남은 시간 |
-| ⭐ **Usage 7D** | 7일 usage limit 사용률과 reset 시각 |
+| 📅 **Usage 7D** | 7일 usage limit 사용률과 reset 시각 |
 
 ---
 

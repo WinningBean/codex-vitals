@@ -125,7 +125,7 @@ func TestRenderAnswerFooter(t *testing.T) {
 		Style: RenderStyleAnswerFooter,
 		Color: false,
 	})
-	want := "  🤖 gpt-5.5 ⚡xhigh no git no env\n  📂 /Users/wsb/my-project 🌿(main) 🧾 0 tokens\n  🧠 Context  ██████████████████░░ 91% used (236k/258k)\n  🚀 Usage 5H ████████░░░░░░░░░░░░ 40%\n  ⭐ Usage 7D █████████░░░░░░░░░░░ 46%"
+	want := "  🤖 gpt-5.5 ⚡xhigh no git no env\n  📂 /Users/wsb/my-project 🌿(main) 🧾 0 tokens\n  🧠 Context  ██████████████████░░ 91% used (236k/258k)\n  🚀 Usage 5H ████████░░░░░░░░░░░░ 40%\n  📅 Usage 7D █████████░░░░░░░░░░░ 46%"
 	if got != want {
 		t.Fatalf("RenderLineWithOptions() = %q, want %q", got, want)
 	}
