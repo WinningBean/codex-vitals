@@ -11,249 +11,283 @@ import (
 	"time"
 )
 
-const defaultContextBarWidth = 6
-const answerFooterBarWidth = 20
-
-type RenderStyle string
-
-const (
-	RenderStyleCompact      RenderStyle = "compact"
-	RenderStyleCurrentHUD   RenderStyle = "current-hud"
-	RenderStyleAnswerFooter RenderStyle = "answer-footer"
+// Shared palette (Catppuccin-ish).
+var (
+	cModel  = rgb{148, 226, 213}
+	cBranch = rgb{64, 160, 43}
+	cPath   = rgb{166, 173, 200}
+	cTokens = rgb{250, 179, 135}
+	cCtx    = rgb{245, 194, 231}
+	c5H     = rgb{180, 190, 254}
+	c7D     = rgb{249, 226, 175}
+	cDirty  = rgb{223, 142, 29}
 )
 
+// Size controls how much the HUD shows, xs (least) to xl (most).
+type Size string
+
+const (
+	SizeXS Size = "xs"
+	SizeS  Size = "s"
+	SizeM  Size = "m"
+	SizeL  Size = "l"
+	SizeXL Size = "xl"
+)
+
+func ParseSize(value string) (Size, error) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "", "m", "medium":
+		return SizeM, nil
+	case "xs", "xsmall":
+		return SizeXS, nil
+	case "s", "small":
+		return SizeS, nil
+	case "l", "large":
+		return SizeL, nil
+	case "xl", "xlarge":
+		return SizeXL, nil
+	default:
+		return "", ErrInvalidSize
+	}
+}
+
+var ErrInvalidSize = errInvalidSize{}
+
+type errInvalidSize struct{}
+
+func (errInvalidSize) Error() string {
+	return "size must be one of: xs, s, m, l, xl"
+}
+
 type RenderOptions struct {
-	Style RenderStyle
+	Size  Size
 	Color bool
 }
 
-func ParseRenderStyle(value string) (RenderStyle, error) {
-	switch RenderStyle(value) {
-	case "", RenderStyleCompact:
-		return RenderStyleCompact, nil
-	case RenderStyleCurrentHUD:
-		return RenderStyleCurrentHUD, nil
-	case RenderStyleAnswerFooter:
-		return RenderStyleAnswerFooter, nil
-	default:
-		return "", ErrInvalidRenderStyle
-	}
-}
-
-var ErrInvalidRenderStyle = errInvalidRenderStyle{}
-
-type errInvalidRenderStyle struct{}
-
-func (errInvalidRenderStyle) Error() string {
-	return "style must be one of: compact, current-hud, answer-footer"
-}
-
 func RenderLine(snapshot Snapshot, homeDir string) string {
-	return RenderLineWithOptions(snapshot, homeDir, RenderOptions{Style: RenderStyleCompact})
+	return RenderLineWithOptions(snapshot, homeDir, RenderOptions{Size: SizeM})
 }
 
 func RenderLineWithOptions(snapshot Snapshot, homeDir string, options RenderOptions) string {
-	switch options.Style {
-	case RenderStyleCurrentHUD:
-		return renderCurrentHUDLine(snapshot, homeDir, options.Color)
-	case RenderStyleAnswerFooter:
-		return renderAnswerFooter(snapshot, homeDir, options.Color)
+	if formatModel(snapshot.Model) == "" && !snapshot.Tokens.HasTokens && snapshot.Session.CWD == "" {
+		return "codex-vitals: waiting for Codex session data"
+	}
+	switch options.Size {
+	case SizeXS:
+		return renderXS(snapshot, homeDir, options.Color)
+	case SizeS:
+		return renderS(snapshot, homeDir, options.Color)
+	case SizeL:
+		return renderLarge(snapshot, homeDir, options.Color, 20)
+	case SizeXL:
+		return renderLarge(snapshot, homeDir, options.Color, 40)
 	default:
-		return renderCompactLine(snapshot, homeDir)
+		return renderM(snapshot, homeDir, options.Color)
 	}
 }
 
-func renderCompactLine(snapshot Snapshot, homeDir string) string {
-	var segments []string
+// --- size layouts ----------------------------------------------------------
 
-	model := formatModel(snapshot.Model)
-	if model != "" {
-		segments = append(segments, "🤖 "+model)
+// xs: two lines, tiny bars, no labels or percentages.
+func renderXS(s Snapshot, home string, color bool) string {
+	var l1 []string
+	if m := modelBolt(s.Model); m != "" {
+		l1 = append(l1, "🤖 "+colorizeIf(m, cModel, color))
 	}
-	if snapshot.Session.GitBranch != "" {
-		segments = append(segments, "🌿 "+snapshot.Session.GitBranch)
+	if s.Session.CWD != "" {
+		l1 = append(l1, "📂 "+colorizeIf(abbreviateHome(s.Session.CWD, home), cPath, color))
 	}
-	if snapshot.Session.CWD != "" {
-		segments = append(segments, abbreviateHome(snapshot.Session.CWD, homeDir))
-	}
-	if snapshot.Tokens.HasTokens {
-		context := snapshot.Tokens.Context
-		segments = append(segments, fmt.Sprintf(
-			"Ctx %s %d%% (%s/%s)",
-			RenderBar(context.Percent, defaultContextBarWidth),
-			context.Percent,
-			FormatTokenCount(context.UsedTokens),
-			FormatTokenCount(context.TotalTokens),
-		))
-	}
-	if snapshot.Tokens.Primary != nil {
-		segments = append(segments, fmt.Sprintf("5h %.0f%%", remainingPercent(snapshot.Tokens.Primary.UsedPercent)))
-	}
-	if snapshot.Tokens.Secondary != nil {
-		segments = append(segments, fmt.Sprintf("wk %.0f%%", remainingPercent(snapshot.Tokens.Secondary.UsedPercent)))
+	if s.Session.GitBranch != "" {
+		l1 = append(l1, colorizeIf(branchText(s), cBranch, color))
 	}
 
-	if len(segments) == 0 {
-		return "codex-vitals: waiting for Codex session data"
+	l2 := []string{"🧠 " + bar(s.Tokens.Context.Percent, 10, "context", color)}
+	if s.Tokens.Primary != nil {
+		l2 = append(l2, "5H "+bar(pct(s.Tokens.Primary), 10, "default", color))
 	}
-	return strings.Join(segments, " · ")
+	if s.Tokens.Secondary != nil {
+		l2 = append(l2, "7D "+bar(pct(s.Tokens.Secondary), 10, "7d", color))
+	}
+	return strings.Join(l1, " ") + "\n" + strings.Join(l2, "  ")
 }
 
-func renderCurrentHUDLine(snapshot Snapshot, homeDir string, color bool) string {
-	var segments []coloredSegment
-
-	model := formatModel(snapshot.Model)
-	if model != "" {
-		segments = append(segments, coloredSegment{text: model, rgb: rgb{148, 226, 213}})
+// s: two lines, labels and percentages, pipe separators.
+func renderS(s Snapshot, home string, color bool) string {
+	var g1 []string
+	if m := modelBolt(s.Model); m != "" {
+		g1 = append(g1, "🤖 "+colorizeIf(m, cModel, color))
 	}
-	if snapshot.Session.CWD != "" {
-		segments = append(segments, coloredSegment{
-			text: abbreviateHome(snapshot.Session.CWD, homeDir),
-			rgb:  rgb{166, 173, 200},
-		})
-	}
-	if snapshot.Tokens.HasTokens {
-		segments = append(segments, coloredSegment{
-			text: fmt.Sprintf("Context %d%% used", snapshot.Tokens.Context.Percent),
-			rgb:  rgb{245, 194, 231},
-		})
-	}
-	if snapshot.Tokens.Primary != nil {
-		segments = append(segments, coloredSegment{
-			text: fmt.Sprintf("5h %.0f%% left", remainingPercent(snapshot.Tokens.Primary.UsedPercent)),
-			rgb:  rgb{180, 190, 254},
-		})
-	}
-	if snapshot.Tokens.Secondary != nil {
-		segments = append(segments, coloredSegment{
-			text: fmt.Sprintf("weekly %.0f%% left", remainingPercent(snapshot.Tokens.Secondary.UsedPercent)),
-			rgb:  rgb{249, 226, 175},
-		})
-	}
-
-	if len(segments) == 0 {
-		return "codex-vitals: waiting for Codex session data"
-	}
-	return joinColoredSegments(segments, color)
-}
-
-func renderAnswerFooter(snapshot Snapshot, homeDir string, color bool) string {
-	lines := make([]string, 0, 6)
-	separator := " "
-
-	model := formatModel(snapshot.Model)
-	if model != "" {
-		modelLabel := snapshot.Model.Model
-		if snapshot.Model.Effort != "" {
-			modelLabel += " ⚡" + snapshot.Model.Effort
+	if s.Session.CWD != "" {
+		p := "📂 " + colorizeIf(abbreviateHome(s.Session.CWD, home), cPath, color)
+		if s.Session.GitBranch != "" {
+			p += " " + colorizeIf(branchText(s), cBranch, color)
 		}
-		lines = append(lines, fmt.Sprintf(
-			"  🤖 %s%s%s%s%s",
-			colorizeIf(modelLabel, rgb{148, 226, 213}, color),
-			separator,
-			renderGitDirty(snapshot.Session.CWD, color),
-			separator,
+		g1 = append(g1, p)
+	}
+
+	g2 := []string{labeledBar("🧠", "Context", s.Tokens.Context.Percent, 10, "context", cCtx, color)}
+	if s.Tokens.Primary != nil {
+		g2 = append(g2, labeledBar("", "5H", pct(s.Tokens.Primary), 10, "default", c5H, color))
+	}
+	if s.Tokens.Secondary != nil {
+		g2 = append(g2, labeledBar("", "7D", pct(s.Tokens.Secondary), 10, "7d", c7D, color))
+	}
+	return strings.Join(g1, pipe(color)) + "\n" + strings.Join(g2, pipe(color))
+}
+
+// m (default): four lines, full-width context bar.
+func renderM(s Snapshot, home string, color bool) string {
+	lines := make([]string, 0, 4)
+
+	if m := modelBolt(s.Model); m != "" {
+		lines = append(lines, strings.Join([]string{
+			"🤖 " + colorizeIf(m, cModel, color),
+			renderGitDirty(s.Session.CWD, color),
 			renderEnv(color),
-		))
+		}, pipe(color)))
 	}
-
-	if snapshot.Session.CWD != "" {
-		line := fmt.Sprintf(
-			"  📂 %s",
-			colorizeIf(snapshot.Session.CWD, rgb{166, 173, 200}, color),
-		)
-		if snapshot.Session.GitBranch != "" {
-			line += " " + colorizeIf("🌿("+strings.TrimSuffix(snapshot.Session.GitBranch, "*")+")", rgb{64, 160, 43}, color)
-		}
-		if snapshot.Tokens.HasTokens {
-			line += separator + "🧾 " + colorizeIf(FormatTokenCount(snapshot.Tokens.SessionTotalTokens)+" tokens", rgb{250, 179, 135}, color)
-		}
-		if !snapshot.StartedAt.IsZero() {
-			line += separator + dimIf("⏰ "+formatDuration(sessionDuration(snapshot)), color)
+	if s.Session.CWD != "" {
+		line := "📂 " + colorizeIf(abbreviateHome(s.Session.CWD, home), cPath, color)
+		if s.Session.GitBranch != "" {
+			line += " " + colorizeIf(branchText(s), cBranch, color)
 		}
 		lines = append(lines, line)
 	}
-
-	if snapshot.Tokens.HasTokens {
-		context := snapshot.Tokens.Context
-		lines = append(lines, renderAnswerFooterUsage(
-			"🧠",
-			"Context",
-			context.Percent,
-			"used",
-			fmt.Sprintf("(%s/%s)", FormatTokenCount(context.UsedTokens), FormatTokenCount(context.TotalTokens)),
-			rgb{245, 194, 231},
-			"context",
-			color,
-		))
+	if s.Tokens.HasTokens {
+		lines = append(lines, "🧠 "+colorizeIf("Context", cCtx, color)+" "+
+			bar(s.Tokens.Context.Percent, 30, "context", color)+" "+
+			pctText(s.Tokens.Context.Percent, "context", color)+" "+dimIf("used", color))
 	}
-
-	if snapshot.Tokens.Primary != nil {
-		lines = append(lines, renderAnswerFooterUsage(
-			"🚀",
-			"Usage 5H",
-			int(math.Round(snapshot.Tokens.Primary.UsedPercent)),
-			"",
-			formatReset(snapshot.Tokens.Primary, "left"),
-			rgb{180, 190, 254},
-			"default",
-			color,
-		))
+	var usage []string
+	if s.Tokens.Primary != nil {
+		usage = append(usage, labeledBar("🚀", "Usage 5H", pct(s.Tokens.Primary), 10, "default", c5H, color))
 	}
-	if snapshot.Tokens.Secondary != nil {
-		lines = append(lines, renderAnswerFooterUsage(
-			"📅",
-			"Usage 7D",
-			int(math.Round(snapshot.Tokens.Secondary.UsedPercent)),
-			"",
-			formatReset(snapshot.Tokens.Secondary, "datetime"),
-			rgb{249, 226, 175},
-			"7d",
-			color,
-		))
+	if s.Tokens.Secondary != nil {
+		usage = append(usage, labeledBar("📅", "7D", pct(s.Tokens.Secondary), 10, "7d", c7D, color))
 	}
-
-	if len(lines) == 0 {
-		return "codex-vitals: waiting for Codex session data"
+	if len(usage) > 0 {
+		lines = append(lines, strings.Join(usage, pipe(color)))
 	}
 	return strings.Join(lines, "\n")
 }
 
-func renderAnswerFooterUsage(icon string, label string, percent int, suffix string, extra string, color rgb, gradientKind string, useColor bool) string {
-	prefix := fmt.Sprintf("  %s %s", icon, label)
-	gap := " "
-	if label == "Context" {
-		gap = "  "
+// l / xl: five lines with reset times and token counts; xl uses wider bars.
+func renderLarge(s Snapshot, home string, color bool, barWidth int) string {
+	lines := make([]string, 0, 5)
+
+	if m := modelBolt(s.Model); m != "" {
+		lines = append(lines, strings.Join([]string{
+			"🤖 " + colorizeIf(m, cModel, color),
+			renderGitDirty(s.Session.CWD, color),
+			renderEnv(color),
+		}, pipe(color)))
 	}
-	bar := RenderBar(percent, answerFooterBarWidth)
-	if useColor {
-		bar = renderGradientBar(percent, answerFooterBarWidth, gradientKind)
-		prefix = fmt.Sprintf("  %s %s", icon, colorize(label, color))
-		value := fmt.Sprintf("%d%%", percent)
-		if suffix != "" {
-			value += " " + suffix
+	if s.Session.CWD != "" {
+		parts := []string{"📂 " + colorizeIf(abbreviateHome(s.Session.CWD, home), cPath, color)}
+		if s.Session.GitBranch != "" {
+			parts[0] += " " + colorizeIf(branchText(s), cBranch, color)
 		}
-		suffix = colorize(value, gradientColor(float64(percent), gradientKind))
-		if extra != "" {
-			extra = " " + dimText(extra)
+		if s.Tokens.HasTokens {
+			parts = append(parts, "🧾 "+colorizeIf(FormatTokenCount(s.Tokens.SessionTotalTokens)+" tokens", cTokens, color))
 		}
-		return fmt.Sprintf("%s%s%s %s%s", prefix, gap, bar, suffix, extra)
+		if !s.StartedAt.IsZero() {
+			parts = append(parts, dimIf("⏰ "+formatDuration(sessionDuration(s)), color))
+		}
+		lines = append(lines, strings.Join(parts, pipe(color)))
 	}
+	if s.Tokens.HasTokens {
+		c := s.Tokens.Context
+		lines = append(lines, usageLine("🧠", "Context", c.Percent, barWidth, "context", cCtx,
+			"used", fmt.Sprintf("(%s/%s)", FormatTokenCount(c.UsedTokens), FormatTokenCount(c.TotalTokens)), color))
+	}
+	if s.Tokens.Primary != nil {
+		lines = append(lines, usageLine("🚀", "Usage 5H", pct(s.Tokens.Primary), barWidth, "default", c5H,
+			"", formatReset(s.Tokens.Primary, "left"), color))
+	}
+	if s.Tokens.Secondary != nil {
+		lines = append(lines, usageLine("📅", "Usage 7D", pct(s.Tokens.Secondary), barWidth, "7d", c7D,
+			"", formatReset(s.Tokens.Secondary, "datetime"), color))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// --- building blocks -------------------------------------------------------
+
+// labeledBar: "icon Label ██░ N%" (icon optional). Used by s and m.
+func labeledBar(icon, label string, percent, width int, kind string, labelColor rgb, color bool) string {
+	var b strings.Builder
+	if icon != "" {
+		b.WriteString(icon + " ")
+	}
+	b.WriteString(colorizeIf(label, labelColor, color))
+	b.WriteString(" " + bar(percent, width, kind, color))
+	b.WriteString(" " + pctText(percent, kind, color))
+	return b.String()
+}
+
+// usageLine: "  icon Label ███ N% used (extra)" for the large layouts.
+func usageLine(icon, label string, percent, width int, kind string, labelColor rgb, suffix, extra string, color bool) string {
 	value := fmt.Sprintf("%d%%", percent)
 	if suffix != "" {
 		value += " " + suffix
 	}
-	line := fmt.Sprintf("%s%s%s %s", prefix, gap, bar, value)
+	labelText := colorizeIf(label, labelColor, color)
+	valueText := value
+	if color {
+		valueText = colorize(value, gradientColor(float64(percent), kind))
+	}
+	line := icon + " " + labelText + " " + bar(percent, width, kind, color) + " " + valueText
 	if extra != "" {
-		line += " " + extra
+		line += " " + dimIf(extra, color)
 	}
 	return line
 }
 
-type coloredSegment struct {
-	text string
-	rgb  rgb
+func modelBolt(m ModelInfo) string {
+	switch {
+	case m.Model != "" && m.Effort != "":
+		return m.Model + " ⚡" + m.Effort
+	case m.Model != "":
+		return m.Model
+	default:
+		return m.Effort
+	}
 }
+
+func branchText(s Snapshot) string {
+	return "🌿(" + strings.TrimSuffix(s.Session.GitBranch, "*") + ")"
+}
+
+func pct(limit *RateLimit) int {
+	if limit == nil {
+		return 0
+	}
+	return int(math.Round(limit.UsedPercent))
+}
+
+func bar(percent, width int, kind string, color bool) string {
+	if color {
+		return renderGradientBar(percent, width, kind)
+	}
+	return RenderBar(percent, width)
+}
+
+func pctText(percent int, kind string, color bool) string {
+	s := fmt.Sprintf("%d%%", percent)
+	if color {
+		return colorize(s, gradientColor(float64(percent), kind))
+	}
+	return s
+}
+
+func pipe(color bool) string {
+	if color {
+		return " \x1b[2m│\x1b[0m "
+	}
+	return " │ "
+}
+
+// --- shared helpers --------------------------------------------------------
 
 type rgb struct {
 	red   int
@@ -261,24 +295,29 @@ type rgb struct {
 	blue  int
 }
 
-func joinColoredSegments(segments []coloredSegment, color bool) string {
-	rendered := make([]string, 0, len(segments))
-	for _, segment := range segments {
-		if color {
-			rendered = append(rendered, colorize(segment.text, segment.rgb))
-		} else {
-			rendered = append(rendered, segment.text)
-		}
-	}
-	separator := " · "
-	if color {
-		separator = "\x1b[2m · \x1b[0m"
-	}
-	return strings.Join(rendered, separator)
-}
-
 func colorize(text string, color rgb) string {
 	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[0m", color.red, color.green, color.blue, text)
+}
+
+func colorizeIf(text string, color rgb, enabled bool) string {
+	if !enabled {
+		return text
+	}
+	return colorize(text, color)
+}
+
+func dimText(text string) string {
+	if text == "" {
+		return ""
+	}
+	return "\x1b[2m" + text + "\x1b[0m"
+}
+
+func dimIf(text string, color bool) string {
+	if color {
+		return dimText(text)
+	}
+	return text
 }
 
 func renderGradientBar(percent int, width int, gradientKind string) string {
@@ -307,27 +346,6 @@ func renderGradientBar(percent int, width int, gradientKind string) string {
 		builder.WriteString(colorize(strings.Repeat("░", empty), gradientColor(float64(percent), gradientKind)))
 	}
 	return builder.String()
-}
-
-func colorizeIf(text string, color rgb, enabled bool) string {
-	if !enabled {
-		return text
-	}
-	return colorize(text, color)
-}
-
-func dimSeparator(color bool) string {
-	if color {
-		return "\x1b[2m · \x1b[0m"
-	}
-	return " · "
-}
-
-func dimText(text string) string {
-	if text == "" {
-		return ""
-	}
-	return "\x1b[2m" + text + "\x1b[0m"
 }
 
 func gradientColor(percent float64, kind string) rgb {
@@ -368,20 +386,44 @@ func renderGitDirty(cwd string, color bool) string {
 	if cwd == "" {
 		return dimIf("no git", color)
 	}
-	output, err := exec.Command("git", "-C", cwd, "status", "--porcelain", "--untracked-files=no").Output()
+	output, err := exec.Command("git", "-C", cwd, "status", "--porcelain").Output()
 	if err != nil {
 		return dimIf("no git", color)
 	}
-	count := 0
-	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
-		if strings.TrimSpace(line) != "" {
-			count++
+	added, modified, deleted, untracked := 0, 0, 0, 0
+	for _, line := range strings.Split(strings.TrimRight(string(output), "\n"), "\n") {
+		if len(line) < 2 {
+			continue
+		}
+		code := line[:2]
+		switch {
+		case code == "??":
+			untracked++
+		case strings.Contains(code, "A"):
+			added++
+		case strings.Contains(code, "D"):
+			deleted++
+		default:
+			modified++
 		}
 	}
-	if count == 0 {
-		return colorizeIf("✅ clean", rgb{64, 160, 43}, color)
+	if added+modified+deleted+untracked == 0 {
+		return colorizeIf("✅ clean", cBranch, color)
 	}
-	return colorizeIf("📝 !"+strconv.Itoa(count), rgb{223, 142, 29}, color)
+	var parts []string
+	if added > 0 {
+		parts = append(parts, "+"+strconv.Itoa(added))
+	}
+	if modified > 0 {
+		parts = append(parts, "!"+strconv.Itoa(modified))
+	}
+	if deleted > 0 {
+		parts = append(parts, "-"+strconv.Itoa(deleted))
+	}
+	if untracked > 0 {
+		parts = append(parts, "?"+strconv.Itoa(untracked))
+	}
+	return colorizeIf("📝 "+strings.Join(parts, " "), cDirty, color)
 }
 
 func renderEnv(color bool) string {
@@ -395,14 +437,7 @@ func renderEnv(color bool) string {
 	if strings.Contains(envLabel, string(os.PathSeparator)) {
 		envLabel = filepath.Base(envLabel)
 	}
-	return "🐍 " + colorizeIf(envLabel, rgb{64, 160, 43}, color)
-}
-
-func dimIf(text string, color bool) string {
-	if color {
-		return dimText(text)
-	}
-	return text
+	return "🐍 " + colorizeIf(envLabel, cBranch, color)
 }
 
 func sessionDuration(snapshot Snapshot) time.Duration {
@@ -471,7 +506,6 @@ func RenderBar(percent int, width int) string {
 	if percent > 100 {
 		percent = 100
 	}
-
 	filled := int(math.Round(float64(percent) / 100 * float64(width)))
 	if filled < 0 {
 		filled = 0
@@ -511,15 +545,4 @@ func abbreviateHome(path string, homeDir string) string {
 		return "~" + string(filepath.Separator) + strings.TrimPrefix(cleanPath, prefix)
 	}
 	return path
-}
-
-func remainingPercent(used float64) float64 {
-	remaining := 100 - used
-	if remaining < 0 {
-		return 0
-	}
-	if remaining > 100 {
-		return 100
-	}
-	return remaining
 }

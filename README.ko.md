@@ -7,7 +7,7 @@
 
 [English](./README.md) · [한국어](./README.ko.md)
 
-[빠른 설치](#-빠른-설치) · [미리보기](#-미리보기) · [표시 항목](#-표시-항목) · [옵션](#-옵션) · [FAQ](#-faq)
+[빠른 설치](#-빠른-설치) · [사이즈](#-사이즈) · [표시 항목](#-표시-항목) · [옵션](#-옵션) · [FAQ](#-faq)
 
 <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go 1.22+"/>
 <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-89b4fa?style=flat-square" alt="macOS Linux"/>
@@ -53,7 +53,7 @@ go install github.com/WinningBean/codex-vitals/cmd/codex-vitals@latest
 설치 후 `PATH`에 `$GOPATH/bin` 또는 `$HOME/go/bin`이 잡혀 있어야 합니다.
 
 ```bash
-codex-vitals -once -context-mode current-hud -style answer-footer
+codex-vitals -once -context-mode current-hud -size l
 ```
 
 ### 소스에서 직접 빌드
@@ -62,54 +62,77 @@ codex-vitals -once -context-mode current-hud -style answer-footer
 git clone https://github.com/WinningBean/codex-vitals.git
 cd codex-vitals
 CGO_ENABLED=0 go build -o codex-vitals ./cmd/codex-vitals
-./codex-vitals -once -context-mode current-hud -style answer-footer
+./codex-vitals -once -context-mode current-hud -size l
 ```
 
 ### 로컬 개발 중 실행
 
 ```bash
 go run ./cmd/codex-vitals -once
-go run ./cmd/codex-vitals -once -context-mode current-hud -style answer-footer
+go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 ```
 
 ---
 
-## 📸 미리보기
+## 📐 사이즈
 
-터미널에서는 색상이 적용됩니다. GitHub README에서는 아래 텍스트 블록의 색상이 안 보일 수 있습니다.
+`-size`(기본 `m`)로 HUD가 보여주는 정보량을 고릅니다. CC-statusline에서 영감을 받았습니다.
 
-### answer-footer 스타일
+| 사이즈 | 줄 | 표시 |
+|--------|:--:|------|
+| `xs` | 2 | 모델 · 경로 · branch · 미니 바 3개 |
+| `s`  | 2 | + 라벨과 퍼센트 |
+| `m` (기본) | 4 | 모델 · git · env · 풀폭 context 바 |
+| `l`  | 5 | + tokens, session 시간, reset 시각, 20칸 바 |
+| `xl` | 5 | 전부, 40칸 바 |
+
+터미널에서는 색상이 적용됩니다. GitHub에서는 아래 텍스트 블록의 색상이 안 보일 수 있습니다.
+
+**`xs`**
 
 ```text
-  🤖 gpt-5.5 ⚡xhigh ✅ clean no env
-  📂 ~/Documents/Github/codex-vitals 🌿(main) 🧾 2.1M tokens ⏰ 42m
-  🧠 Context  ██████████░░░░░░░░░░ 49% used (126k/258k)
-  🚀 Usage 5H █████████████░░░░░░░ 67% (Reset 2h33m left)
-  📅 Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
+🤖 gpt-5.5 ⚡xhigh 📂 ~/Documents/Github/codex-vitals 🌿(main)
+🧠 █████░░░░░  5H ███████░░░  7D ████░░░░░░
+```
+
+**`s`**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ 📂 ~/Documents/Github/codex-vitals 🌿(main)
+🧠 Context █████░░░░░ 49% │ 5H ███████░░░ 67% │ 7D ████░░░░░░ 42%
+```
+
+**`m` (기본)**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
+📂 ~/Documents/Github/codex-vitals 🌿(main)
+🧠 Context ███████████████░░░░░░░░░░░░░░░ 49% used
+🚀 Usage 5H ███████░░░ 67% │ 📅 7D ████░░░░░░ 42%
+```
+
+**`l`**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
+📂 ~/Documents/Github/codex-vitals 🌿(main) │ 🧾 2.1M tokens │ ⏰ 42m
+🧠 Context ██████████░░░░░░░░░░ 49% used (126k/258k)
+🚀 Usage 5H █████████████░░░░░░░ 67% (Reset 2h33m left)
+📅 Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
+```
+
+**`xl`**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
+📂 ~/Documents/Github/codex-vitals 🌿(main) │ 🧾 2.1M tokens │ ⏰ 42m
+🧠 Context ████████████████████░░░░░░░░░░░░░░░░░░░░ 49% used (126k/258k)
+🚀 Usage 5H ███████████████████████████░░░░░░░░░░░░░ 67% (Reset 2h33m left)
+📅 Usage 7D █████████████████░░░░░░░░░░░░░░░░░░░░░░░ 42% (Reset Fri 16:45)
 ```
 
 ```bash
-codex-vitals -once -context-mode current-hud -style answer-footer
-```
-
-### 단일 라인 스타일
-
-```text
-gpt-5.5 xhigh · ~/Documents/Github/codex-vitals · Context 49% used · 5h 33% left · weekly 58% left
-```
-
-```bash
-codex-vitals -once -context-mode current-hud -style current-hud
-```
-
-### compact 스타일
-
-```text
-🤖 gpt-5.5 xhigh · 🌿 main · ~/Documents/Github/codex-vitals · Ctx ███░░░ 49% (126k/258k) · 5h 33% · wk 58%
-```
-
-```bash
-codex-vitals -once
+codex-vitals -once -size xs   # 또는 s, m, l, xl
 ```
 
 ---
@@ -146,7 +169,7 @@ stock Codex는 system prompt, tools, `/compact` 여유 공간을 위해 baseline
 현재 사용 중인 HUD와 숫자가 맞지 않는다면 patched Codex HUD 공식을 쓰고 있을 가능성이 큽니다. 이 경우 `current-hud`를 사용하세요.
 
 ```bash
-codex-vitals -once -context-mode current-hud -style answer-footer
+codex-vitals -once -context-mode current-hud -size l
 ```
 
 ---
@@ -163,8 +186,8 @@ codex-vitals -once -context-mode current-hud -style answer-footer
 -context-mode string
     context 사용률 계산 방식: codex 또는 current-hud
 
--style string
-    출력 스타일: compact, current-hud, answer-footer
+-size string
+    HUD 사이즈: xs, s, m, l, xl (기본 m)
 
 -interval duration
     반복 출력 주기. 기본값은 1s
@@ -187,7 +210,7 @@ codex-vitals \
   -once \
   -rollout /path/to/session.jsonl \
   -context-mode current-hud \
-  -style answer-footer
+  -size l
 ```
 
 색상이 깨져 보이는 환경에서는 `--no-color`를 붙이세요.
@@ -212,22 +235,23 @@ codex-vitals \
 Codex가 실행 중인 tmux 세션 안에서 아래를 실행하면 하단에 HUD 패널이 붙습니다.
 
 ```bash
-scripts/tmux-hud.sh                 # answer-footer, 1초마다 갱신
-scripts/tmux-hud.sh -style current-hud
-CODEX_VITALS_TMUX_HEIGHT=7 scripts/tmux-hud.sh
+scripts/tmux-hud.sh                 # 사이즈 m, 1초마다 갱신
+scripts/tmux-hud.sh -size l
+scripts/tmux-hud.sh -size xs
+CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-hud.sh -size xl
 ```
 
-포커스는 원래 패널로 돌아오고, HUD 패널에서 Ctrl+C를 누르면 닫힙니다. 직접 실행할 수도 있습니다.
+패널 높이는 사이즈에 맞춰 자동 조정되며, `CODEX_VITALS_TMUX_HEIGHT`로 덮어쓸 수 있습니다. 포커스는 원래 패널로 돌아오고, HUD 패널에서 Ctrl+C를 누르면 닫힙니다. 직접 실행할 수도 있습니다.
 
 ```bash
 # 한 번만 출력
-codex-vitals -once -context-mode current-hud -style answer-footer
+codex-vitals -once -context-mode current-hud -size l
 
 # 1초마다 갱신
-codex-vitals -context-mode current-hud -style answer-footer -interval 1s
+codex-vitals -context-mode current-hud -size l -interval 1s
 
 # 색상 없이 로그/README용으로 출력
-codex-vitals -once -context-mode current-hud -style answer-footer --no-color
+codex-vitals -once -context-mode current-hud -size l --no-color
 ```
 
 ---
@@ -272,7 +296,7 @@ Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경
 실시간으로 rollout이 계속 갱신되기 때문에 실행 시점 차이로 token count가 1k 단위로 흔들릴 수 있습니다. 현재 HUD와 공식을 맞추려면 `-context-mode current-hud`를 사용하세요.
 
 **5H가 left가 아니라 used로 보입니다.**
-`answer-footer` 스타일은 현재 HUD와 맞추기 위해 usage limit을 사용률 기준으로 보여줍니다. `current-hud` 단일 라인은 남은 비율을 `left` 형태로 표시합니다.
+현재 Codex HUD와 맞추기 위해 usage limit을 사용률(얼마나 썼는지) 기준으로 보여줍니다. reset 시각은 `l`, `xl` 사이즈의 바 옆에 함께 표시됩니다.
 
 **Node가 필요한가요?**
 아니요. `codex-vitals` 자체는 Go 바이너리입니다.

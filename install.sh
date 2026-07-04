@@ -64,4 +64,4 @@ case ":${PATH}:" in
   *":${INSTALL_DIR}:"*) : ;;
   *) info "Add it to your PATH:  export PATH=\"${INSTALL_DIR}:\$PATH\"" ;;
 esac
-info "Try it:  ${BIN} -once -style answer-footer"
+info "Try it:  ${BIN} -once -size l"

@@ -7,7 +7,7 @@ See model, reasoning effort, git status, working directory, context usage, and 5
 
 [English](./README.md) · [한국어](./README.ko.md)
 
-[Quick install](#-quick-install) · [Preview](#-preview) · [What it shows](#-what-it-shows) · [Options](#-options) · [FAQ](#-faq)
+[Quick install](#-quick-install) · [Sizes](#-sizes) · [What it shows](#-what-it-shows) · [Options](#-options) · [FAQ](#-faq)
 
 <img src="https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go 1.22+"/>
 <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-89b4fa?style=flat-square" alt="macOS Linux"/>
@@ -53,7 +53,7 @@ go install github.com/WinningBean/codex-vitals/cmd/codex-vitals@latest
 Make sure `$GOPATH/bin` (or `$HOME/go/bin`) is on your `PATH`, then:
 
 ```bash
-codex-vitals -once -context-mode current-hud -style answer-footer
+codex-vitals -once -context-mode current-hud -size l
 ```
 
 ### Build from source
@@ -62,54 +62,77 @@ codex-vitals -once -context-mode current-hud -style answer-footer
 git clone https://github.com/WinningBean/codex-vitals.git
 cd codex-vitals
 CGO_ENABLED=0 go build -o codex-vitals ./cmd/codex-vitals
-./codex-vitals -once -context-mode current-hud -style answer-footer
+./codex-vitals -once -context-mode current-hud -size l
 ```
 
 ### Run during local development
 
 ```bash
 go run ./cmd/codex-vitals -once
-go run ./cmd/codex-vitals -once -context-mode current-hud -style answer-footer
+go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 ```
 
 ---
 
-## 📸 Preview
+## 📐 Sizes
 
-Colors show in a real terminal; GitHub may not render ANSI colors in the text block below.
+Pick how much the HUD shows with `-size` (default `m`), inspired by CC-statusline:
 
-### answer-footer style
+| Size | Lines | Shows |
+|------|:-----:|-------|
+| `xs` | 2 | model · path · branch · 3 tiny bars |
+| `s`  | 2 | + labels and percentages |
+| `m` (default) | 4 | model · git · env · full-width context bar |
+| `l`  | 5 | + tokens, session time, reset times, 20-wide bars |
+| `xl` | 5 | everything, 40-wide bars |
+
+Colors show in a real terminal; GitHub may not render the ANSI colors in the text blocks below.
+
+**`xs`**
 
 ```text
-  🤖 gpt-5.5 ⚡xhigh ✅ clean no env
-  📂 ~/Documents/Github/codex-vitals 🌿(main) 🧾 2.1M tokens ⏰ 42m
-  🧠 Context  ██████████░░░░░░░░░░ 49% used (126k/258k)
-  🚀 Usage 5H █████████████░░░░░░░ 67% (Reset 2h33m left)
-  📅 Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
+🤖 gpt-5.5 ⚡xhigh 📂 ~/Documents/Github/codex-vitals 🌿(main)
+🧠 █████░░░░░  5H ███████░░░  7D ████░░░░░░
+```
+
+**`s`**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ 📂 ~/Documents/Github/codex-vitals 🌿(main)
+🧠 Context █████░░░░░ 49% │ 5H ███████░░░ 67% │ 7D ████░░░░░░ 42%
+```
+
+**`m` (default)**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
+📂 ~/Documents/Github/codex-vitals 🌿(main)
+🧠 Context ███████████████░░░░░░░░░░░░░░░ 49% used
+🚀 Usage 5H ███████░░░ 67% │ 📅 7D ████░░░░░░ 42%
+```
+
+**`l`**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
+📂 ~/Documents/Github/codex-vitals 🌿(main) │ 🧾 2.1M tokens │ ⏰ 42m
+🧠 Context ██████████░░░░░░░░░░ 49% used (126k/258k)
+🚀 Usage 5H █████████████░░░░░░░ 67% (Reset 2h33m left)
+📅 Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
+```
+
+**`xl`**
+
+```text
+🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
+📂 ~/Documents/Github/codex-vitals 🌿(main) │ 🧾 2.1M tokens │ ⏰ 42m
+🧠 Context ████████████████████░░░░░░░░░░░░░░░░░░░░ 49% used (126k/258k)
+🚀 Usage 5H ███████████████████████████░░░░░░░░░░░░░ 67% (Reset 2h33m left)
+📅 Usage 7D █████████████████░░░░░░░░░░░░░░░░░░░░░░░ 42% (Reset Fri 16:45)
 ```
 
 ```bash
-codex-vitals -once -context-mode current-hud -style answer-footer
-```
-
-### single-line style
-
-```text
-gpt-5.5 xhigh · ~/Documents/Github/codex-vitals · Context 49% used · 5h 33% left · weekly 58% left
-```
-
-```bash
-codex-vitals -once -context-mode current-hud -style current-hud
-```
-
-### compact style
-
-```text
-🤖 gpt-5.5 xhigh · 🌿 main · ~/Documents/Github/codex-vitals · Ctx ███░░░ 49% (126k/258k) · 5h 33% · wk 58%
-```
-
-```bash
-codex-vitals -once
+codex-vitals -once -size xs   # or s, m, l, xl
 ```
 
 ---
@@ -146,7 +169,7 @@ Stock Codex reserves a `12000`-token baseline (system prompt, tools, and room to
 If the number doesn't match your running HUD, you're probably on a patched Codex build — use `current-hud`:
 
 ```bash
-codex-vitals -once -context-mode current-hud -style answer-footer
+codex-vitals -once -context-mode current-hud -size l
 ```
 
 ---
@@ -163,8 +186,8 @@ codex-vitals -once -context-mode current-hud -style answer-footer
 -context-mode string
     Context usage formula: codex or current-hud
 
--style string
-    Output style: compact, current-hud, answer-footer
+-size string
+    HUD size: xs, s, m, l, xl (default m)
 
 -interval duration
     Refresh interval. Default 1s
@@ -185,7 +208,7 @@ codex-vitals \
   -once \
   -rollout /path/to/session.jsonl \
   -context-mode current-hud \
-  -style answer-footer
+  -size l
 ```
 
 If colors look broken in your environment, add `--no-color`.
@@ -210,22 +233,23 @@ It finds the most recent Codex session and renders it; use `-rollout` to pin a s
 From inside a tmux session (e.g. where Codex is running), add a HUD pane at the bottom:
 
 ```bash
-scripts/tmux-hud.sh                 # answer-footer, refreshing every 1s
-scripts/tmux-hud.sh -style current-hud
-CODEX_VITALS_TMUX_HEIGHT=7 scripts/tmux-hud.sh
+scripts/tmux-hud.sh                 # size m, refreshing every 1s
+scripts/tmux-hud.sh -size l
+scripts/tmux-hud.sh -size xs
+CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-hud.sh -size xl
 ```
 
-Focus returns to your original pane; Ctrl+C in the HUD pane closes it. Or run it directly:
+The pane height auto-fits the size; override it with `CODEX_VITALS_TMUX_HEIGHT`. Focus returns to your original pane; Ctrl+C in the HUD pane closes it. Or run it directly:
 
 ```bash
 # render once
-codex-vitals -once -context-mode current-hud -style answer-footer
+codex-vitals -once -context-mode current-hud -size l
 
 # refresh every second
-codex-vitals -context-mode current-hud -style answer-footer -interval 1s
+codex-vitals -context-mode current-hud -size l -interval 1s
 
 # no color, for logs / README
-codex-vitals -once -context-mode current-hud -style answer-footer --no-color
+codex-vitals -once -context-mode current-hud -size l --no-color
 ```
 
 ---
@@ -270,7 +294,7 @@ Markdown / chat renderers usually don't interpret ANSI escapes as colors. Run it
 Rollouts update live, so token counts can shift by ~1k depending on when you run. To match your HUD's formula, use `-context-mode current-hud`.
 
 **5H shows used, not left.**
-The `answer-footer` style shows usage limits as used-percent to match a running HUD. The `current-hud` single line shows remaining (`left`) instead.
+The HUD shows usage limits as used-percent (how much of the window you've spent) to match a running Codex HUD. Reset times are shown next to the `l` and `xl` bars.
 
 **Do I need Node?**
 No. `codex-vitals` itself is a Go binary.

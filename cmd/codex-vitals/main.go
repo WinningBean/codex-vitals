@@ -16,7 +16,7 @@ func main() {
 	rolloutPath := flag.String("rollout", "", "path to a rollout JSONL file")
 	codexHome := flag.String("codex-home", "", "path to CODEX_HOME; defaults to $CODEX_HOME or ~/.codex")
 	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or current-hud")
-	styleValue := flag.String("style", string(vitals.RenderStyleCompact), "render style: compact, current-hud, or answer-footer")
+	sizeValue := flag.String("size", string(vitals.SizeM), "HUD size: xs, s, m, l, or xl")
 	noColor := flag.Bool("no-color", false, "disable ANSI colors")
 	interval := flag.Duration("interval", time.Second, "refresh interval")
 	once := flag.Bool("once", false, "render once and exit")
@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		exitErr(err)
 	}
-	style, err := vitals.ParseRenderStyle(*styleValue)
+	size, err := vitals.ParseSize(*sizeValue)
 	if err != nil {
 		exitErr(err)
 	}
@@ -47,7 +47,7 @@ func main() {
 		ContextMode: contextMode,
 	}
 	if *once {
-		fmt.Println(render(options, homeDir, newRenderOptions(style, !*noColor)))
+		fmt.Println(render(options, homeDir, newRenderOptions(size, !*noColor)))
 		return
 	}
 
@@ -56,7 +56,7 @@ func main() {
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()
 
-	renderOptions := newRenderOptions(style, !*noColor)
+	renderOptions := newRenderOptions(size, !*noColor)
 	frame := render(options, homeDir, renderOptions)
 	fmt.Print(frame)
 	prevLines := strings.Count(frame, "\n") + 1
@@ -88,9 +88,9 @@ func render(options vitals.LoadOptions, homeDir string, renderOptions vitals.Ren
 	return vitals.RenderLineWithOptions(snapshot, homeDir, renderOptions)
 }
 
-func newRenderOptions(style vitals.RenderStyle, color bool) vitals.RenderOptions {
+func newRenderOptions(size vitals.Size, color bool) vitals.RenderOptions {
 	return vitals.RenderOptions{
-		Style: style,
+		Size:  size,
 		Color: color,
 	}
 }
