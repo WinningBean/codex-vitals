@@ -42,6 +42,14 @@ curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/insta
 
 Downloads the prebuilt binary for your OS/arch into `~/.local/bin` (falls back to building from source if no release is published yet).
 
+Pick a default size in the same command (`xs`, `s`, `m`, `l`, `xl`):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash -s -- xl
+```
+
+This writes `export CODEX_VITALS_SIZE=xl` to your shell rc, so every `codex-vitals` run defaults to that size. Override any time with `-size`.
+
 ### `go install`
 
 Easiest if you have Go 1.22+:
@@ -187,7 +195,7 @@ codex-vitals -once -context-mode current-hud -size l
     Context usage formula: codex or current-hud
 
 -size string
-    HUD size: xs, s, m, l, xl (default m)
+    HUD size: xs, s, m, l, xl (default m; env: CODEX_VITALS_SIZE)
 
 -interval duration
     Refresh interval. Default 1s
@@ -198,6 +206,8 @@ codex-vitals -once -context-mode current-hud -size l
 -no-color
     Output without ANSI colors
 ```
+
+Set `CODEX_VITALS_SIZE` to make a size the default without passing `-size` every time (the installer can do this for you — see [Quick install](#-quick-install)). The `-size` flag always overrides it.
 
 ---
 

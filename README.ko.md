@@ -42,6 +42,14 @@ curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/insta
 
 OS/아키텍처에 맞는 prebuilt 바이너리를 `~/.local/bin`에 설치합니다 (릴리스가 아직 없으면 소스 빌드로 폴백).
 
+설치와 동시에 기본 사이즈(`xs`, `s`, `m`, `l`, `xl`)를 지정할 수 있습니다:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash -s -- xl
+```
+
+shell rc에 `export CODEX_VITALS_SIZE=xl`을 기록해, 이후 `codex-vitals` 실행 시 항상 그 사이즈가 기본이 됩니다. `-size` 플래그로 언제든 덮어쓸 수 있습니다.
+
 ### `go install`로 설치
 
 Go 1.22 이상이 있으면 가장 간단합니다.
@@ -187,7 +195,7 @@ codex-vitals -once -context-mode current-hud -size l
     context 사용률 계산 방식: codex 또는 current-hud
 
 -size string
-    HUD 사이즈: xs, s, m, l, xl (기본 m)
+    HUD 사이즈: xs, s, m, l, xl (기본 m; 환경변수: CODEX_VITALS_SIZE)
 
 -interval duration
     반복 출력 주기. 기본값은 1s
@@ -198,6 +206,8 @@ codex-vitals -once -context-mode current-hud -size l
 -no-color
     ANSI 색상 없이 출력
 ```
+
+`CODEX_VITALS_SIZE`를 설정하면 매번 `-size`를 주지 않아도 그 사이즈가 기본이 됩니다 (설치 스크립트가 대신 기록해줄 수 있음 — [빠른 설치](#-빠른-설치) 참고). `-size` 플래그가 항상 우선합니다.
 
 ---
 

@@ -33,7 +33,8 @@ else
 fi
 
 # Derive the requested size so the pane can be sized to fit its line count.
-size="m"
+# Falls back to CODEX_VITALS_SIZE (what the binary itself defaults to).
+size="${CODEX_VITALS_SIZE:-m}"
 prev=""
 for arg in "$@"; do
   case "$arg" in

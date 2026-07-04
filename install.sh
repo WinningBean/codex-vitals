@@ -4,18 +4,49 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash
 #
+# Pick a default HUD size in one shot (xs, s, m, l, xl):
+#
+#   curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash -s -- xl
+#
 # Downloads the prebuilt binary for your OS/arch from the latest GitHub release
 # and installs it to ~/.local/bin. If no matching release asset exists yet, it
-# falls back to building from source with `go install`.
+# falls back to building from source with `go install`. When a size is given,
+# it writes `export CODEX_VITALS_SIZE=<size>` to your shell rc so every run
+# defaults to that size (override any time with `-size`).
 #
 set -euo pipefail
 
 REPO="WinningBean/codex-vitals"
 BIN="codex-vitals"
 INSTALL_DIR="${CODEX_VITALS_BIN_DIR:-$HOME/.local/bin}"
+SIZE="${1:-}"
 
 info() { printf '  %s\n' "$*"; }
 err() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+case "$SIZE" in
+  ""|xs|xsmall|s|small|m|medium|l|large|xl|xlarge) : ;;
+  *) err "invalid size: $SIZE (use xs, s, m, l, or xl)" ;;
+esac
+
+# Pick the shell rc to persist CODEX_VITALS_SIZE into.
+detect_rc() {
+  case "${SHELL:-}" in
+    */zsh)  printf '%s\n' "$HOME/.zshrc" ;;
+    */bash) printf '%s\n' "$HOME/.bashrc" ;;
+    *) if [ -f "$HOME/.zshrc" ]; then printf '%s\n' "$HOME/.zshrc"; else printf '%s\n' "$HOME/.bashrc"; fi ;;
+  esac
+}
+
+# Replace any existing CODEX_VITALS_SIZE line, then append the chosen size.
+persist_size() {
+  local size="$1" rc; rc="$(detect_rc)"
+  touch "$rc"
+  grep -v 'export CODEX_VITALS_SIZE=' "$rc" > "${rc}.codex-vitals.tmp" 2>/dev/null || true
+  mv "${rc}.codex-vitals.tmp" "$rc"
+  printf 'export CODEX_VITALS_SIZE=%s  # codex-vitals default HUD size\n' "$size" >> "$rc"
+  info "Set default size '${size}' in ${rc/#$HOME/~}"
+}
 
 # --- detect OS / arch -------------------------------------------------------
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -57,6 +88,11 @@ else
   info "Installed from source → ${target}"
 fi
 
+# --- persist chosen size ----------------------------------------------------
+if [ -n "$SIZE" ]; then
+  persist_size "$SIZE"
+fi
+
 # --- PATH hint --------------------------------------------------------------
 echo
 info "✓ ${BIN} installed to ${INSTALL_DIR}"
@@ -64,4 +100,9 @@ case ":${PATH}:" in
   *":${INSTALL_DIR}:"*) : ;;
   *) info "Add it to your PATH:  export PATH=\"${INSTALL_DIR}:\$PATH\"" ;;
 esac
-info "Try it:  ${BIN} -once -size l"
+if [ -n "$SIZE" ]; then
+  info "Reload your shell (or run: export CODEX_VITALS_SIZE=${SIZE}) so it takes effect now."
+  info "Try it:  ${BIN} -once"
+else
+  info "Try it:  ${BIN} -once -size l    (or install with a default size: … | bash -s -- xl)"
+fi
