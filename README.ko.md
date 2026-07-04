@@ -209,6 +209,16 @@ codex-vitals \
 
 ## 🧩 tmux / footer에서 쓰기
 
+Codex가 실행 중인 tmux 세션 안에서 아래를 실행하면 하단에 HUD 패널이 붙습니다.
+
+```bash
+scripts/tmux-hud.sh                 # answer-footer, 1초마다 갱신
+scripts/tmux-hud.sh -style current-hud
+CODEX_VITALS_TMUX_HEIGHT=7 scripts/tmux-hud.sh
+```
+
+포커스는 원래 패널로 돌아오고, HUD 패널에서 Ctrl+C를 누르면 닫힙니다. 직접 실행할 수도 있습니다.
+
 ```bash
 # 한 번만 출력
 codex-vitals -once -context-mode current-hud -style answer-footer
@@ -279,7 +289,7 @@ Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경
 - [x] 설치 스크립트
 - [x] screenshot / SVG preview asset
 - [x] release binary 자동 배포
-- [ ] tmux integration helper
+- [x] tmux integration helper
 
 ---
 

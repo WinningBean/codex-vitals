@@ -207,6 +207,16 @@ It finds the most recent Codex session and renders it; use `-rollout` to pin a s
 
 ## 🧩 Using it in tmux / as a footer
 
+From inside a tmux session (e.g. where Codex is running), add a HUD pane at the bottom:
+
+```bash
+scripts/tmux-hud.sh                 # answer-footer, refreshing every 1s
+scripts/tmux-hud.sh -style current-hud
+CODEX_VITALS_TMUX_HEIGHT=7 scripts/tmux-hud.sh
+```
+
+Focus returns to your original pane; Ctrl+C in the HUD pane closes it. Or run it directly:
+
 ```bash
 # render once
 codex-vitals -once -context-mode current-hud -style answer-footer
@@ -277,7 +287,7 @@ No. It uses standard emoji and Unicode block characters.
 - [x] Install script
 - [x] Screenshot / SVG preview asset
 - [x] Release binary automation
-- [ ] tmux integration helper
+- [x] tmux integration helper
 
 ---
 

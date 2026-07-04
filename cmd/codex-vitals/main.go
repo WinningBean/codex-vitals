@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/WinningBean/codex-vitals/internal/vitals"
@@ -56,11 +57,22 @@ func main() {
 	defer ticker.Stop()
 
 	renderOptions := newRenderOptions(style, !*noColor)
-	fmt.Print(render(options, homeDir, renderOptions))
+	frame := render(options, homeDir, renderOptions)
+	fmt.Print(frame)
+	prevLines := strings.Count(frame, "\n") + 1
 	for {
 		select {
 		case <-ticker.C:
-			fmt.Printf("\r\033[2K%s", render(options, homeDir, renderOptions))
+			// Move the cursor back to the top of the previous frame and clear
+			// it, so multi-line output redraws in place instead of scrolling.
+			// Emitted together with the new frame in one write to avoid flicker.
+			clear := "\r\033[2K"
+			if prevLines > 1 {
+				clear = fmt.Sprintf("\r\033[%dA\033[J", prevLines-1)
+			}
+			frame = render(options, homeDir, renderOptions)
+			fmt.Print(clear + frame)
+			prevLines = strings.Count(frame, "\n") + 1
 		case <-signals:
 			fmt.Println()
 			return
