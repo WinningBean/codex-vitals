@@ -34,7 +34,15 @@
 
 ## 🚀 빠른 설치
 
-### 1. `go install`로 설치
+### 원라이너 (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash
+```
+
+OS/아키텍처에 맞는 prebuilt 바이너리를 `~/.local/bin`에 설치합니다 (릴리스가 아직 없으면 소스 빌드로 폴백).
+
+### `go install`로 설치
 
 Go 1.22 이상이 있으면 가장 간단합니다.
 
@@ -48,7 +56,7 @@ go install github.com/WinningBean/codex-vitals/cmd/codex-vitals@latest
 codex-vitals -once -context-mode current-hud -style answer-footer
 ```
 
-### 2. 소스에서 직접 빌드
+### 소스에서 직접 빌드
 
 ```bash
 git clone https://github.com/WinningBean/codex-vitals.git
@@ -57,7 +65,7 @@ CGO_ENABLED=0 go build -o codex-vitals ./cmd/codex-vitals
 ./codex-vitals -once -context-mode current-hud -style answer-footer
 ```
 
-### 3. 로컬 개발 중 실행
+### 로컬 개발 중 실행
 
 ```bash
 go run ./cmd/codex-vitals -once
@@ -268,8 +276,8 @@ Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경
 
 - [x] Phase 1 MVP: rollout parser, context% 공식, config/model 실시간 로직, 단일 라인 렌더
 - [x] 현재 Codex HUD와 맞춘 `answer-footer` 스타일
-- [ ] 설치 스크립트
-- [ ] screenshot / SVG preview asset
+- [x] 설치 스크립트
+- [x] screenshot / SVG preview asset
 - [ ] release binary 자동 배포
 - [ ] tmux integration helper
 

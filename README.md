@@ -34,7 +34,15 @@ See model, reasoning effort, git status, working directory, context usage, and 5
 
 ## 🚀 Quick install
 
-### 1. `go install`
+### One line (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash
+```
+
+Downloads the prebuilt binary for your OS/arch into `~/.local/bin` (falls back to building from source if no release is published yet).
+
+### `go install`
 
 Easiest if you have Go 1.22+:
 
@@ -48,7 +56,7 @@ Make sure `$GOPATH/bin` (or `$HOME/go/bin`) is on your `PATH`, then:
 codex-vitals -once -context-mode current-hud -style answer-footer
 ```
 
-### 2. Build from source
+### Build from source
 
 ```bash
 git clone https://github.com/WinningBean/codex-vitals.git
@@ -57,7 +65,7 @@ CGO_ENABLED=0 go build -o codex-vitals ./cmd/codex-vitals
 ./codex-vitals -once -context-mode current-hud -style answer-footer
 ```
 
-### 3. Run during local development
+### Run during local development
 
 ```bash
 go run ./cmd/codex-vitals -once
@@ -266,8 +274,8 @@ No. It uses standard emoji and Unicode block characters.
 
 - [x] Phase 1 MVP: rollout parser, context % formula, live config/model logic, single-line render
 - [x] `answer-footer` style matched to a running Codex HUD
-- [ ] Install script
-- [ ] Screenshot / SVG preview asset
+- [x] Install script
+- [x] Screenshot / SVG preview asset
 - [ ] Release binary automation
 - [ ] tmux integration helper
 
