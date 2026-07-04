@@ -282,26 +282,11 @@ Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경
 
 ---
 
-## 🗺️ Roadmap
+## Acknowledgements
 
-- [x] Phase 1 MVP: rollout parser, context% 공식, config/model 실시간 로직, 단일 라인 렌더
-- [x] 현재 Codex HUD와 맞춘 `answer-footer` 스타일
-- [x] 설치 스크립트
-- [x] screenshot / SVG preview asset
-- [x] release binary 자동 배포
-- [x] tmux integration helper
-
----
-
-## Credits
-
-`codex-vitals`는 Codex CLI용 독립 Go 구현이며, 다른 프로젝트의 소스 코드를 복사하지 않았습니다.
-
-- **HUD 개념·스타일**: 상주형 터미널 HUD라는 아이디어의 원조는
-  [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (Claude Code용)입니다.
-- **시각적 방향·팔레트**: 레이아웃과 20-block gradient bar는
-  [AwesomeJun/CC-statusline](https://github.com/AwesomeJun/CC-statusline)에서 영감을 받았습니다.
-- [openai/codex](https://github.com/openai/codex)가 기록하는 session 데이터 위에서 동작합니다.
+- 상주형 터미널 HUD라는 아이디어의 원조는 [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (Claude Code용)입니다.
+- 레이아웃과 gradient bar는 [AwesomeJun/CC-statusline](https://github.com/AwesomeJun/CC-statusline)에서 영감을 받았습니다.
+- [openai/codex](https://github.com/openai/codex)가 기록하는 session 데이터를 읽습니다.
 
 ---
 

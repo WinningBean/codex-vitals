@@ -280,26 +280,11 @@ No. It uses standard emoji and Unicode block characters.
 
 ---
 
-## 🗺️ Roadmap
+## Acknowledgements
 
-- [x] Phase 1 MVP: rollout parser, context % formula, live config/model logic, single-line render
-- [x] `answer-footer` style matched to a running Codex HUD
-- [x] Install script
-- [x] Screenshot / SVG preview asset
-- [x] Release binary automation
-- [x] tmux integration helper
-
----
-
-## Credits
-
-`codex-vitals` is an independent Go implementation for Codex CLI — no source code is copied from other projects.
-
-- **HUD concept & style**: the persistent terminal-HUD idea originates from
-  [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (for Claude Code).
-- **Visual direction / palette**: the layout and 20-block gradient bar were inspired by
-  [AwesomeJun/CC-statusline](https://github.com/AwesomeJun/CC-statusline).
-- Built on the session data written by [openai/codex](https://github.com/openai/codex).
+- The persistent terminal-HUD idea comes from [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (for Claude Code).
+- The layout and gradient bar were inspired by [AwesomeJun/CC-statusline](https://github.com/AwesomeJun/CC-statusline).
+- Reads session data written by [openai/codex](https://github.com/openai/codex).
 
 ---
 
