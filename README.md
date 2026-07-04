@@ -276,7 +276,7 @@ No. It uses standard emoji and Unicode block characters.
 - [x] `answer-footer` style matched to a running Codex HUD
 - [x] Install script
 - [x] Screenshot / SVG preview asset
-- [ ] Release binary automation
+- [x] Release binary automation
 - [ ] tmux integration helper
 
 ---

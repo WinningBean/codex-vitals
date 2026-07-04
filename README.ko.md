@@ -278,7 +278,7 @@ Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경
 - [x] 현재 Codex HUD와 맞춘 `answer-footer` 스타일
 - [x] 설치 스크립트
 - [x] screenshot / SVG preview asset
-- [ ] release binary 자동 배포
+- [x] release binary 자동 배포
 - [ ] tmux integration helper
 
 ---

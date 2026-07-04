@@ -1,0 +1,45 @@
+name: release
+
+# Cross-compiles binaries and attaches them to a GitHub Release when a
+# version tag (e.g. v0.1.0) is pushed. install.sh downloads these assets.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build binaries
+        run: |
+          mkdir -p dist
+          for target in darwin/arm64 darwin/amd64 linux/amd64 linux/arm64; do
+            os="${target%/*}"
+            arch="${target#*/}"
+            echo "building codex-vitals-${os}-${arch}"
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
+              go build -trimpath -ldflags "-s -w" \
+              -o "dist/codex-vitals-${os}-${arch}" ./cmd/codex-vitals
+          done
+          ( cd dist && shasum -a 256 codex-vitals-* > checksums.txt )
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/codex-vitals-*
+            dist/checksums.txt
+          generate_release_notes: true
