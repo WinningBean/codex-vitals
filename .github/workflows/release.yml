@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          # No third-party deps (no go.sum), so there is nothing to cache.
+          cache: false
 
       - name: Test
         run: go test ./...
