@@ -116,3 +116,34 @@ func TestFindLatestRollout(t *testing.T) {
 		t.Fatalf("FindLatestRollout() = %q, want %q", got, newPath)
 	}
 }
+
+func TestParseRolloutCarriesForwardRateLimits(t *testing.T) {
+	// The first token_count carries rate limits; the latest one omits them
+	// (primary/secondary null). The 5H/7D values must persist.
+	input := strings.NewReader(`
+{"timestamp":"2026-07-03T09:00:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":50000,"input_tokens":48000,"cached_input_tokens":1000,"output_tokens":2000},"total_token_usage":{"total_tokens":50000},"model_context_window":258400},"rate_limits":{"primary":{"used_percent":1,"window_minutes":300,"resets_at":1783072800},"secondary":{"used_percent":26,"window_minutes":10080,"resets_at":1783677600}}}}
+{"timestamp":"2026-07-03T09:05:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":79794,"input_tokens":78000,"cached_input_tokens":1500,"output_tokens":1794},"total_token_usage":{"total_tokens":79794},"model_context_window":258400},"rate_limits":{"primary":null,"secondary":null}}}
+`)
+
+	got, err := ParseRollout(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got.Tokens.Primary == nil {
+		t.Fatalf("primary rate limit should carry forward, got nil")
+	}
+	if got.Tokens.Primary.UsedPercent != 1 || got.Tokens.Primary.WindowMinutes != 300 {
+		t.Errorf("primary not carried forward: %+v", got.Tokens.Primary)
+	}
+	if got.Tokens.Secondary == nil {
+		t.Fatalf("secondary rate limit should carry forward, got nil")
+	}
+	if got.Tokens.Secondary.UsedPercent != 26 || got.Tokens.Secondary.WindowMinutes != 10080 {
+		t.Errorf("secondary not carried forward: %+v", got.Tokens.Secondary)
+	}
+	// Context still reflects the LATEST token_count.
+	if got.Tokens.Context.Percent != 28 {
+		t.Errorf("context percent = %d, want 28 (latest event)", got.Tokens.Context.Percent)
+	}
+}

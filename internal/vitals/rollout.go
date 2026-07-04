@@ -302,6 +302,15 @@ func applyTokenCount(snapshot *Snapshot, payload json.RawMessage, mode ContextMo
 
 	primary := tokenCount.RateLimits.Primary.rateLimit()
 	secondary := tokenCount.RateLimits.Secondary.rateLimit()
+	// Rate limits appear only on some token_count events; the latest event
+	// frequently omits them. Carry forward the last non-nil value so the 5H/7D
+	// lines don't vanish once they have appeared in the session.
+	if primary == nil {
+		primary = snapshot.Tokens.Primary
+	}
+	if secondary == nil {
+		secondary = snapshot.Tokens.Secondary
+	}
 	totalUsage := tokenCount.Info.TotalTokenUsage
 	sessionTotalTokens := totalUsage.InputTokens + totalUsage.OutputTokens + totalUsage.ReasoningOutputTokens
 	if sessionTotalTokens == 0 {
