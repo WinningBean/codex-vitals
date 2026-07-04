@@ -20,17 +20,17 @@ go run ./cmd/codex-vitals -once
 go run ./cmd/codex-vitals
 ```
 
-To compare against a local HUD build that uses Codex TUI's current
-`input_tokens + cached_input_tokens` basis, render with:
-
-```sh
-go run ./cmd/codex-vitals -once -context-mode current-hud -style current-hud
-```
-
 For a multi-line terminal footer with emojis and a context bar:
 
 ```sh
-go run ./cmd/codex-vitals -once -context-mode current-hud -style answer-footer
+go run ./cmd/codex-vitals -once -style answer-footer
+```
+
+Running a patched Codex build and the context % doesn't match? Add
+`-context-mode current-hud` (see [Context percentage](#context-percentage--matching-your-codex)):
+
+```sh
+go run ./cmd/codex-vitals -once -style answer-footer -context-mode current-hud
 ```
 
 By default it reads:
@@ -38,11 +38,30 @@ By default it reads:
 - rollout JSONL files under `~/.codex/sessions`
 - config from `$CODEX_HOME/config.toml` or `~/.codex/config.toml`
 
-## Accuracy
+## Context percentage & matching your Codex
 
-Codex reserves `12000` baseline tokens. `codex-vitals` subtracts that baseline
-from both `last_token_usage.total_tokens` and `model_context_window`, then rounds
-the effective usage percentage. This is the default `-context-mode codex`.
+Codex reserves `12000` baseline tokens (system prompt, tools, and room to run
+`/compact`). The default `-context-mode codex` mirrors **stock Codex**: it
+subtracts the baseline from both `total_tokens` and `model_context_window`, so
+the percentage matches what Codex's own status line shows.
+
+```
+codex (default):  (total_tokens − 12000) / (context_window − 12000)
+current-hud:      (input_tokens + cached_input_tokens) / context_window
+```
+
+If codex-vitals' context % does **not** match your Codex status line, you are
+probably running a **patched Codex build** whose TUI uses a different formula.
+Switch to `-context-mode current-hud` to match it:
+
+```sh
+go run ./cmd/codex-vitals -once -context-mode current-hud
+```
+
+| Mode | Formula | Matches |
+|------|---------|---------|
+| `codex` (default) | `(total − 12k) / (window − 12k)` | stock Codex |
+| `current-hud` | `(input + cached) / window` | patched forks using that basis |
 
 ## Credits
 
