@@ -48,7 +48,7 @@ Pick a default size in the same command (`xs`, `s`, `m`, `l`, `xl`):
 curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash -s -- xl
 ```
 
-This writes `export CODEX_VITALS_SIZE=xl` to your shell rc, so every `codex-vitals` run defaults to that size. Override any time with `-size`.
+This writes the size to `~/.config/codex-vitals/size`, which the panel re-reads every second — so a **running panel switches size live**, no restart or shell reload. Re-run with a different size any time to change it. A `-size` flag still overrides it for a single run.
 
 ### `go install`
 
@@ -195,7 +195,8 @@ codex-vitals -once -context-mode current-hud -size l
     Context usage formula: codex or current-hud
 
 -size string
-    panel size: xs, s, m, l, xl (default m; env: CODEX_VITALS_SIZE)
+    panel size: xs, s, m, l, xl
+    (default: ~/.config/codex-vitals/size, then CODEX_VITALS_SIZE, then m)
 
 -interval duration
     Refresh interval. Default 1s
@@ -207,7 +208,7 @@ codex-vitals -once -context-mode current-hud -size l
     Output without ANSI colors
 ```
 
-Set `CODEX_VITALS_SIZE` to make a size the default without passing `-size` every time (the installer can do this for you — see [Quick install](#-quick-install)). The `-size` flag always overrides it.
+The default size lives in `~/.config/codex-vitals/size` (write it with the installer — see [Quick install](#-quick-install) — or `echo l > ~/.config/codex-vitals/size`). The panel re-reads it every second, so changing it updates a running panel live. `CODEX_VITALS_SIZE` works as a fallback, and the `-size` flag always overrides both.
 
 ---
 

@@ -1,27 +1,30 @@
 #!/usr/bin/env bash
 #
 # codex-vitals-panel: launch Codex with a live codex-vitals panel pane below it.
-# Drop-in replacement for the fwyc0573 codex-hud wrapper.
 #
-#   CODEX_CLI_PATH           path to the codex binary (default: codex on PATH)
-#   CODEX_VITALS_SIZE        panel size (xs|s|m|l|xl); also sets pane height
-#   CODEX_VITALS_TMUX_HEIGHT override pane height
+#   CODEX_CLI_PATH            path to the codex binary (default: codex on PATH)
+#   CODEX_VITALS_TMUX_HEIGHT  override the panel pane height
+#
+# The panel size comes from ~/.config/codex-vitals/size (set it with
+# `install.sh | bash -s -- <size>`); a running panel picks up changes live.
 #
 set -euo pipefail
 
 CODEX_BIN="${CODEX_CLI_PATH:-codex}"
+# No -size: the binary resolves the size from the config file every second,
+# so changing the file updates the panel live.
+HUD_CMD="codex-vitals -context-mode current-hud -interval 1s"
 
-size="${CODEX_VITALS_SIZE:-m}"
+# Size the pane to the configured size (file > env > m).
+size_file="${XDG_CONFIG_HOME:-$HOME/.config}/codex-vitals/size"
+size="$(cat "$size_file" 2>/dev/null | tr -d '[:space:]' || true)"
+size="${size:-${CODEX_VITALS_SIZE:-m}}"
 case "$size" in
   xs | xsmall | s | small) dh=4 ;;
   l | large | xl | xlarge) dh=8 ;;
   *) dh=6 ;;
 esac
 height="${CODEX_VITALS_TMUX_HEIGHT:-$dh}"
-
-# Pass -size explicitly so the panel honors the size regardless of how tmux
-# propagates the environment to the split pane.
-HUD_CMD="codex-vitals -context-mode current-hud -size $size -interval 1s"
 
 command -v codex-vitals >/dev/null 2>&1 || { echo "codex-vitals-panel: codex-vitals not found on PATH" >&2; exit 1; }
 command -v tmux >/dev/null 2>&1 || { echo "codex-vitals-panel: tmux is required" >&2; exit 1; }
@@ -34,6 +37,6 @@ if [ -n "${TMUX:-}" ]; then
   "$CODEX_BIN" "$@"
 else
   # Not in tmux: spin up a session that re-runs this script inside tmux.
-  inner="CODEX_CLI_PATH=$(printf '%q' "$CODEX_BIN") CODEX_VITALS_SIZE=$(printf '%q' "$size") CODEX_VITALS_TMUX_HEIGHT=$(printf '%q' "$height") $(printf '%q ' "$0" "$@")"
+  inner="CODEX_CLI_PATH=$(printf '%q' "$CODEX_BIN") CODEX_VITALS_TMUX_HEIGHT=$(printf '%q' "$height") $(printf '%q ' "$0" "$@")"
   exec tmux new-session "$inner"
 fi

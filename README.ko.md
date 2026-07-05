@@ -48,7 +48,7 @@ OS/아키텍처에 맞는 prebuilt 바이너리를 `~/.local/bin`에 설치합�
 curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash -s -- xl
 ```
 
-shell rc에 `export CODEX_VITALS_SIZE=xl`을 기록해, 이후 `codex-vitals` 실행 시 항상 그 사이즈가 기본이 됩니다. `-size` 플래그로 언제든 덮어쓸 수 있습니다.
+`~/.config/codex-vitals/size`에 사이즈를 기록합니다. 패널이 이 파일을 매초 다시 읽어서, **떠 있는 패널이 즉시(재시작·셸 리로드 없이) 그 사이즈로 바뀝니다.** 다른 사이즈로 다시 실행하면 언제든 변경됩니다. `-size` 플래그는 단발성으로 이를 덮어씁니다.
 
 ### `go install`로 설치
 
@@ -195,7 +195,8 @@ codex-vitals -once -context-mode current-hud -size l
     context 사용률 계산 방식: codex 또는 current-hud
 
 -size string
-    패널 사이즈: xs, s, m, l, xl (기본 m; 환경변수: CODEX_VITALS_SIZE)
+    패널 사이즈: xs, s, m, l, xl
+    (기본값: ~/.config/codex-vitals/size, 그다음 CODEX_VITALS_SIZE, 그다음 m)
 
 -interval duration
     반복 출력 주기. 기본값은 1s
@@ -207,7 +208,7 @@ codex-vitals -once -context-mode current-hud -size l
     ANSI 색상 없이 출력
 ```
 
-`CODEX_VITALS_SIZE`를 설정하면 매번 `-size`를 주지 않아도 그 사이즈가 기본이 됩니다 (설치 스크립트가 대신 기록해줄 수 있음 — [빠른 설치](#-빠른-설치) 참고). `-size` 플래그가 항상 우선합니다.
+기본 사이즈는 `~/.config/codex-vitals/size`에 저장됩니다 (설치 스크립트로 기록 — [빠른 설치](#-빠른-설치) 참고 — 또는 `echo l > ~/.config/codex-vitals/size`). 패널이 매초 다시 읽어 실행 중에도 즉시 반영됩니다. `CODEX_VITALS_SIZE`는 폴백이며, `-size` 플래그가 항상 최우선입니다.
 
 ---
 

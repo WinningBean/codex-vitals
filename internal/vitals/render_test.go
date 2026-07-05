@@ -1,6 +1,8 @@
 package vitals
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -164,6 +166,34 @@ func TestUsageBarsAligned(t *testing.T) {
 				t.Fatalf("size %s bars not aligned: cols=%v\n%s", size, cols, got)
 			}
 		}
+	}
+}
+
+// ConfiguredSize reads a valid size from the config file and ignores junk.
+func TestConfiguredSize(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+
+	if _, ok := ConfiguredSize(); ok {
+		t.Fatalf("expected no configured size before the file exists")
+	}
+
+	cfg := SizeConfigPath()
+	if err := os.MkdirAll(filepath.Dir(cfg), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(cfg, []byte("  xl\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := ConfiguredSize(); !ok || got != SizeXL {
+		t.Fatalf("ConfiguredSize() = %q, %v; want xl, true", got, ok)
+	}
+
+	if err := os.WriteFile(cfg, []byte("nonsense"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := ConfiguredSize(); ok {
+		t.Fatalf("expected invalid size file to be ignored")
 	}
 }
 

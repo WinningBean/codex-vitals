@@ -16,12 +16,42 @@ func main() {
 	rolloutPath := flag.String("rollout", "", "path to a rollout JSONL file")
 	codexHome := flag.String("codex-home", "", "path to CODEX_HOME; defaults to $CODEX_HOME or ~/.codex")
 	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or current-hud")
-	// Size default: -size flag > CODEX_VITALS_SIZE env > m (empty parses to m).
-	sizeValue := flag.String("size", os.Getenv("CODEX_VITALS_SIZE"), "panel size: xs, s, m, l, or xl (env: CODEX_VITALS_SIZE)")
+	sizeValue := flag.String("size", "", "panel size: xs, s, m, l, or xl (default: ~/.config/codex-vitals/size, then CODEX_VITALS_SIZE, then m)")
 	noColor := flag.Bool("no-color", false, "disable ANSI colors")
 	interval := flag.Duration("interval", time.Second, "refresh interval")
 	once := flag.Bool("once", false, "render once and exit")
 	flag.Parse()
+
+	// An explicit -size flag pins the size; otherwise resolveSize is called on
+	// every render so a running panel follows changes to the config file live.
+	sizeExplicit := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "size" {
+			sizeExplicit = true
+		}
+	})
+	var explicitSize vitals.Size
+	if sizeExplicit {
+		s, err := vitals.ParseSize(*sizeValue)
+		if err != nil {
+			exitErr(err)
+		}
+		explicitSize = s
+	}
+	resolveSize := func() vitals.Size {
+		if sizeExplicit {
+			return explicitSize
+		}
+		if s, ok := vitals.ConfiguredSize(); ok {
+			return s
+		}
+		if env := os.Getenv("CODEX_VITALS_SIZE"); env != "" {
+			if s, err := vitals.ParseSize(env); err == nil {
+				return s
+			}
+		}
+		return vitals.SizeM
+	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -37,18 +67,13 @@ func main() {
 	if err != nil {
 		exitErr(err)
 	}
-	size, err := vitals.ParseSize(*sizeValue)
-	if err != nil {
-		exitErr(err)
-	}
-
 	options := vitals.LoadOptions{
 		CodexHome:   *codexHome,
 		RolloutPath: *rolloutPath,
 		ContextMode: contextMode,
 	}
 	if *once {
-		fmt.Println(render(options, homeDir, newRenderOptions(size, !*noColor)))
+		fmt.Println(render(options, homeDir, newRenderOptions(resolveSize(), !*noColor)))
 		return
 	}
 
@@ -57,13 +82,15 @@ func main() {
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()
 
-	renderOptions := newRenderOptions(size, !*noColor)
+	renderOptions := newRenderOptions(resolveSize(), !*noColor)
 	frame := render(options, homeDir, renderOptions)
 	fmt.Print(frame)
 	prevLines := strings.Count(frame, "\n") + 1
 	for {
 		select {
 		case <-ticker.C:
+			// Re-resolve the size each tick so config-file changes apply live.
+			renderOptions.Size = resolveSize()
 			// Move the cursor back to the top of the previous frame and clear
 			// it, so multi-line output redraws in place instead of scrolling.
 			// Emitted together with the new frame in one write to avoid flicker.

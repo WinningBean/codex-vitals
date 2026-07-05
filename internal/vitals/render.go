@@ -59,6 +59,36 @@ func (errInvalidSize) Error() string {
 	return "size must be one of: xs, s, m, l, xl"
 }
 
+// SizeConfigPath is the file that persists the default panel size. Reading it
+// on every render lets a running panel pick up size changes live.
+func SizeConfigPath() string {
+	if dir := os.Getenv("XDG_CONFIG_HOME"); dir != "" {
+		return filepath.Join(dir, "codex-vitals", "size")
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".config", "codex-vitals", "size")
+}
+
+// ConfiguredSize reads the persisted default size, if one is set and valid.
+func ConfiguredSize() (Size, bool) {
+	path := SizeConfigPath()
+	if path == "" {
+		return "", false
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", false
+	}
+	size, err := ParseSize(strings.TrimSpace(string(data)))
+	if err != nil {
+		return "", false
+	}
+	return size, true
+}
+
 type RenderOptions struct {
 	Size  Size
 	Color bool
