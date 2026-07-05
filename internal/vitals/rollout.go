@@ -155,15 +155,14 @@ func ParseRolloutWithContextMode(reader io.Reader, mode ContextMode) (Snapshot, 
 	for {
 		line, err := buffered.ReadString('\n')
 		if len(strings.TrimSpace(line)) > 0 {
-			if parseErr := applyRolloutLine(&snapshot, []byte(line), mode); parseErr != nil {
-				return Snapshot{}, parseErr
-			}
+			// Skip unparseable lines instead of failing the whole file: while
+			// Codex streams a turn, the last line is often half-written, and
+			// aborting would blank the panel until the write completes.
+			_ = applyRolloutLine(&snapshot, []byte(line), mode)
 		}
 		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			return Snapshot{}, err
+			// EOF or a read error: return whatever parsed so far (best effort).
+			break
 		}
 	}
 	return snapshot, nil

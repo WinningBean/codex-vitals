@@ -205,3 +205,18 @@ func TestLoadSnapshot(t *testing.T) {
 		t.Fatalf("LoadSnapshot(empty) err = %v, want ErrNoRollout", err)
 	}
 }
+
+// A half-written last line (Codex streaming a turn) must not blank the parse.
+func TestParseRolloutSkipsBadLines(t *testing.T) {
+	input := strings.NewReader(
+		`{"timestamp":"2026-07-05T10:00:00Z","type":"session_meta","payload":{"id":"x","cwd":"/tmp/p"}}` + "\n" +
+			`{"timestamp":"2026-07-05T10:02:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":80000},"total_token_usage":{"total_tokens":80000},"model_context_window":258400}}}` + "\n" +
+			`{"timestamp":"2026-07-05T10:03:00Z","type":"turn_`)
+	got, err := ParseRollout(input)
+	if err != nil {
+		t.Fatalf("ParseRollout returned error on partial line: %v", err)
+	}
+	if !got.Tokens.HasTokens {
+		t.Fatalf("token data lost when the last line was partial")
+	}
+}

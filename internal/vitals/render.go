@@ -199,16 +199,22 @@ func renderM(s Snapshot, home string, color bool) string {
 		}
 		lines = append(lines, line)
 	}
-	if s.Tokens.HasTokens {
+	// Always show the context gauge (0% before the first token_count) so it
+	// doesn't pop in mid-session.
+	{
 		// End the context bar where the 7D bar on the usage line ends. With both
 		// bars 10 wide, the offset is 30 + the width of the 5H percentage text.
 		ctxWidth := 30
 		if s.Tokens.Primary != nil && s.Tokens.Secondary != nil {
 			ctxWidth = 30 + len(fmt.Sprintf("%d%%", pct(s.Tokens.Primary)))
 		}
-		lines = append(lines, "🧠 "+colorizeIf(padLabel("Context"), cCtx, color)+" "+
-			bar(s.Tokens.Context.Percent, ctxWidth, "context", color)+" "+
-			pctText(s.Tokens.Context.Percent, "context", color)+" "+dimIf("used", color))
+		line := "🧠 " + colorizeIf(padLabel("Context"), cCtx, color) + " " +
+			bar(s.Tokens.Context.Percent, ctxWidth, "context", color) + " " +
+			pctText(s.Tokens.Context.Percent, "context", color)
+		if s.Tokens.HasTokens {
+			line += " " + dimIf("used", color)
+		}
+		lines = append(lines, line)
 	}
 	var usage []string
 	if s.Tokens.Primary != nil {
@@ -247,10 +253,15 @@ func renderLarge(s Snapshot, home string, color bool, barWidth int) string {
 		}
 		lines = append(lines, strings.Join(parts, pipe(color)))
 	}
-	if s.Tokens.HasTokens {
+	// Always show the context gauge (0% before the first token_count).
+	{
 		c := s.Tokens.Context
-		lines = append(lines, usageLine("🧠", "Context", c.Percent, barWidth, "context", cCtx,
-			"used", fmt.Sprintf("(%s/%s)", FormatTokenCount(c.UsedTokens), FormatTokenCount(c.TotalTokens)), color))
+		suffix, extra := "", ""
+		if s.Tokens.HasTokens {
+			suffix = "used"
+			extra = fmt.Sprintf("(%s/%s)", FormatTokenCount(c.UsedTokens), FormatTokenCount(c.TotalTokens))
+		}
+		lines = append(lines, usageLine("🧠", "Context", c.Percent, barWidth, "context", cCtx, suffix, extra, color))
 	}
 	if s.Tokens.Primary != nil {
 		lines = append(lines, usageLine("🚀", "Usage 5H", pct(s.Tokens.Primary), barWidth, "default", c5H,

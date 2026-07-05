@@ -219,3 +219,21 @@ func TestRenderMargin(t *testing.T) {
 		t.Fatalf("margin 0 should not indent: %q", got)
 	}
 }
+
+// Before the first token_count, the context gauge still shows at 0% (no counts).
+func TestRenderContextBeforeTokens(t *testing.T) {
+	noEnv(t)
+	snap := Snapshot{
+		Session: SessionInfo{CWD: "/tmp/p"},
+		Model:   ModelInfo{Model: "gpt-5.5", Effort: "high", HasTurn: true},
+	}
+	for _, size := range []Size{SizeM, SizeL, SizeXL} {
+		got := RenderLineWithOptions(snap, "/Users/wsb", RenderOptions{Size: size})
+		if !strings.Contains(got, "🧠 Context  ") || !strings.Contains(got, " 0%") {
+			t.Fatalf("size %s missing 0%% context:\n%s", size, got)
+		}
+		if strings.Contains(got, "used") {
+			t.Fatalf("size %s should not show 'used' without tokens:\n%s", size, got)
+		}
+	}
+}
