@@ -106,28 +106,42 @@ func carryRateLimits(snap *Snapshot, options LoadOptions) {
 	if snap.Tokens.Primary != nil && snap.Tokens.Secondary != nil {
 		return
 	}
-	latest, err := FindLatestRollout(options.CodexHome, "", 0)
-	if err != nil || latest == snap.RolloutPath {
-		return
-	}
-	prev, err := ParseRolloutFileWithContextMode(latest, options.ContextMode)
+	files, err := collectRollouts(options.CodexHome)
 	if err != nil {
 		return
 	}
-	if snap.Tokens.Primary == nil {
-		snap.Tokens.Primary = prev.Tokens.Primary
-	}
-	if snap.Tokens.Secondary == nil {
-		snap.Tokens.Secondary = prev.Tokens.Secondary
+	// Borrow from the most recent other session that reported limits — not the
+	// current rollout, which may itself be the newest but still pre-token_count.
+	const scan = 12
+	for i, f := range files {
+		if i >= scan {
+			break
+		}
+		if f.path == snap.RolloutPath {
+			continue
+		}
+		prev, err := ParseRolloutFileWithContextMode(f.path, options.ContextMode)
+		if err != nil || (prev.Tokens.Primary == nil && prev.Tokens.Secondary == nil) {
+			continue
+		}
+		if snap.Tokens.Primary == nil {
+			snap.Tokens.Primary = prev.Tokens.Primary
+		}
+		if snap.Tokens.Secondary == nil {
+			snap.Tokens.Secondary = prev.Tokens.Secondary
+		}
+		return
 	}
 }
 
-func FindLatestRollout(codexHome, cwd string, since int64) (string, error) {
+type rolloutFile struct {
+	path  string
+	mtime time.Time
+}
+
+// collectRollouts returns every rollout file, newest-first by mtime.
+func collectRollouts(codexHome string) ([]rolloutFile, error) {
 	sessionsDir := filepath.Join(codexHome, "sessions")
-	type rolloutFile struct {
-		path  string
-		mtime time.Time
-	}
 	var files []rolloutFile
 	err := filepath.WalkDir(sessionsDir, func(path string, entry os.DirEntry, err error) error {
 		if err != nil || entry.IsDir() {
@@ -146,14 +160,22 @@ func FindLatestRollout(codexHome, cwd string, since int64) (string, error) {
 	})
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return "", ErrNoRollout
+			return nil, ErrNoRollout
 		}
-		return "", err
+		return nil, err
 	}
 	if len(files) == 0 {
-		return "", ErrNoRollout
+		return nil, ErrNoRollout
 	}
 	sort.Slice(files, func(i, j int) bool { return files[i].mtime.After(files[j].mtime) })
+	return files, nil
+}
+
+func FindLatestRollout(codexHome, cwd string, since int64) (string, error) {
+	files, err := collectRollouts(codexHome)
+	if err != nil {
+		return "", err
+	}
 
 	// Panel mode: a launch time was given, so bind to a session in cwd that has
 	// been written since the panel started. This excludes older, unrelated
