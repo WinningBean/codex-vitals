@@ -15,7 +15,7 @@
 <img src="https://img.shields.io/badge/license-MIT-fab387?style=flat-square" alt="MIT"/>
 
 <br/>
-<img src="./assets/preview.svg" alt="codex-vitals 패널 미리보기" width="820"/>
+<img src="./assets/demo.gif" alt="codex-vitals live demo" width="760"/>
 
 </div>
 
@@ -93,6 +93,8 @@ go run ./cmd/codex-vitals -once -context-mode patched -size l
 | `m` (기본) | 4 | 모델 · git · env · 풀폭 context 바 |
 | `l`  | 5 | + tokens, session 시간, reset 시각, 20칸 바 |
 | `xl` | 5 | 전부, 40칸 바 |
+
+<div align="center"><img src="./assets/preview.svg" alt="codex-vitals sizes" width="760"/></div>
 
 터미널에서는 색상이 적용됩니다. GitHub에서는 아래 텍스트 블록의 색상이 안 보일 수 있습니다.
 

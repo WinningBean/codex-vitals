@@ -15,7 +15,7 @@ See model, reasoning effort, git status, working directory, context usage, and 5
 <img src="https://img.shields.io/badge/license-MIT-fab387?style=flat-square" alt="MIT"/>
 
 <br/>
-<img src="./assets/preview.svg" alt="codex-vitals panel preview" width="820"/>
+<img src="./assets/demo.gif" alt="codex-vitals live demo" width="760"/>
 
 </div>
 
@@ -93,6 +93,8 @@ Pick how much the panel shows with `-size` (default `m`):
 | `m` (default) | 4 | model · git · env · full-width context bar |
 | `l`  | 5 | + tokens, session time, reset times, 20-wide bars |
 | `xl` | 5 | everything, 40-wide bars |
+
+<div align="center"><img src="./assets/preview.svg" alt="codex-vitals sizes" width="760"/></div>
 
 Colors show in a real terminal; GitHub may not render the ANSI colors in the text blocks below.
 
