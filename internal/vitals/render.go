@@ -133,10 +133,10 @@ func renderXS(s Snapshot, home string, color bool) string {
 
 	l2 := []string{"🧠 " + bar(s.Tokens.Context.Percent, 10, "context", color)}
 	if s.Tokens.Primary != nil {
-		l2 = append(l2, "5H "+bar(pct(s.Tokens.Primary), 10, "default", color))
+		l2 = append(l2, "🚀 5H "+bar(pct(s.Tokens.Primary), 10, "default", color))
 	}
 	if s.Tokens.Secondary != nil {
-		l2 = append(l2, "7D "+bar(pct(s.Tokens.Secondary), 10, "7d", color))
+		l2 = append(l2, "📅 7D "+bar(pct(s.Tokens.Secondary), 10, "7d", color))
 	}
 	return strings.Join(l1, " ") + "\n" + strings.Join(l2, "  ")
 }
@@ -157,10 +157,10 @@ func renderS(s Snapshot, home string, color bool) string {
 
 	g2 := []string{labeledBar("🧠", "Context", s.Tokens.Context.Percent, 10, "context", cCtx, color)}
 	if s.Tokens.Primary != nil {
-		g2 = append(g2, labeledBar("", "5H", pct(s.Tokens.Primary), 10, "default", c5H, color))
+		g2 = append(g2, labeledBar("🚀", "5H", pct(s.Tokens.Primary), 10, "default", c5H, color))
 	}
 	if s.Tokens.Secondary != nil {
-		g2 = append(g2, labeledBar("", "7D", pct(s.Tokens.Secondary), 10, "7d", c7D, color))
+		g2 = append(g2, labeledBar("📅", "7D", pct(s.Tokens.Secondary), 10, "7d", c7D, color))
 	}
 	return strings.Join(g1, pipe(color)) + "\n" + strings.Join(g2, pipe(color))
 }
@@ -184,8 +184,14 @@ func renderM(s Snapshot, home string, color bool) string {
 		lines = append(lines, line)
 	}
 	if s.Tokens.HasTokens {
+		// End the context bar where the 7D bar on the usage line ends. With both
+		// bars 10 wide, the offset is 30 + the width of the 5H percentage text.
+		ctxWidth := 30
+		if s.Tokens.Primary != nil && s.Tokens.Secondary != nil {
+			ctxWidth = 30 + len(fmt.Sprintf("%d%%", pct(s.Tokens.Primary)))
+		}
 		lines = append(lines, "🧠 "+colorizeIf(padLabel("Context"), cCtx, color)+" "+
-			bar(s.Tokens.Context.Percent, 30, "context", color)+" "+
+			bar(s.Tokens.Context.Percent, ctxWidth, "context", color)+" "+
 			pctText(s.Tokens.Context.Percent, "context", color)+" "+dimIf("used", color))
 	}
 	var usage []string

@@ -100,14 +100,14 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 
 ```text
 🤖 gpt-5.5 ⚡xhigh 📂 ~/Documents/Github/codex-vitals 🌿(main)
-🧠 █████░░░░░  5H ███████░░░  7D ████░░░░░░
+🧠 █████░░░░░  🚀 5H ███████░░░  📅 7D ████░░░░░░
 ```
 
 **`s`**
 
 ```text
 🤖 gpt-5.5 ⚡xhigh │ 📂 ~/Documents/Github/codex-vitals 🌿(main)
-🧠 Context █████░░░░░ 49% │ 5H ███████░░░ 67% │ 7D ████░░░░░░ 42%
+🧠 Context █████░░░░░ 49% │ 🚀 5H ███████░░░ 67% │ 📅 7D ████░░░░░░ 42%
 ```
 
 **`m` (기본)**
@@ -115,7 +115,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 ```text
 🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
 📂 ~/Documents/Github/codex-vitals 🌿(main)
-🧠 Context  ███████████████░░░░░░░░░░░░░░░ 49% used
+🧠 Context  ████████████████░░░░░░░░░░░░░░░░░ 49% used
 🚀 Usage 5H ███████░░░ 67% │ 📅 7D ████░░░░░░ 42%
 ```
 

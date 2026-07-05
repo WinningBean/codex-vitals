@@ -61,8 +61,8 @@ def size_xs():
         [("🤖 ", DIM), ("gpt-5.5 ⚡xhigh", TEAL), (" 📂 ", DIM),
          ("~/Documents/Github/codex-vitals", PATH), (" ", DIM), ("🌿(main)", GREEN)],
         [("🧠 ", DIM)] + bar_segments(CTX, 10, "context") +
-        [("  5H ", DIM)] + bar_segments(H5, 10, "default") +
-        [("  7D ", DIM)] + bar_segments(D7, 10, "7d"),
+        [("  🚀 5H ", DIM)] + bar_segments(H5, 10, "default") +
+        [("  📅 7D ", DIM)] + bar_segments(D7, 10, "7d"),
     ]
 
 def size_s():
@@ -70,9 +70,9 @@ def size_s():
         [("🤖 ", DIM), ("gpt-5.5 ⚡xhigh", TEAL), (" │ ", DIM), ("📂 ", DIM),
          ("~/Documents/Github/codex-vitals", PATH), (" ", DIM), ("🌿(main)", GREEN)],
         [("🧠 ", DIM), ("Context", PINK), (" ", DIM)] + bar_segments(CTX, 10, "context") +
-        [(" ", DIM)] + pct(CTX, "context") + [(" │ ", DIM), ("5H", BLUE), (" ", DIM)] +
+        [(" ", DIM)] + pct(CTX, "context") + [(" │ ", DIM), ("🚀 ", DIM), ("5H", BLUE), (" ", DIM)] +
         bar_segments(H5, 10, "default") + [(" ", DIM)] + pct(H5, "default") +
-        [(" │ ", DIM), ("7D", YELLOW), (" ", DIM)] + bar_segments(D7, 10, "7d") +
+        [(" │ ", DIM), ("📅 ", DIM), ("7D", YELLOW), (" ", DIM)] + bar_segments(D7, 10, "7d") +
         [(" ", DIM)] + pct(D7, "7d"),
     ]
 
@@ -84,7 +84,7 @@ def size_m():
     return [
         head_line(),
         [("📂 ", DIM), ("~/Documents/Github/codex-vitals", PATH), (" ", DIM), ("🌿(main)", GREEN)],
-        [("🧠 ", DIM), ("Context ", PINK), (" ", DIM)] + bar_segments(CTX, 30, "context") +
+        [("🧠 ", DIM), ("Context ", PINK), (" ", DIM)] + bar_segments(CTX, 33, "context") +
         [(" ", DIM)] + pct(CTX, "context") + [(" ", DIM), ("used", DIM)],
         [("🚀 ", DIM), ("Usage 5H", BLUE), (" ", DIM)] + bar_segments(H5, 10, "default") +
         [(" ", DIM)] + pct(H5, "default") + [(" │ ", DIM), ("📅 ", DIM), ("7D", YELLOW), (" ", DIM)] +

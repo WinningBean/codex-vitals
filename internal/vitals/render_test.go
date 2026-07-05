@@ -45,7 +45,7 @@ func TestRenderLineDefaultsToMedium(t *testing.T) {
 	got := RenderLine(sampleSnapshot(), "/Users/wsb")
 	want := "🤖 gpt-5.5 ⚡xhigh │ no git │ no env\n" +
 		"📂 ~/my-project 🌿(main)\n" +
-		"🧠 Context  ████████░░░░░░░░░░░░░░░░░░░░░░ 25% used\n" +
+		"🧠 Context  ████████░░░░░░░░░░░░░░░░░░░░░░░░ 25% used\n" +
 		"🚀 Usage 5H ░░░░░░░░░░ 1% │ 📅 7D ███░░░░░░░ 26%"
 	if got != want {
 		t.Fatalf("RenderLine() =\n%q\nwant\n%q", got, want)
@@ -107,7 +107,7 @@ func TestRenderSizeXS(t *testing.T) {
 	noEnv(t)
 	got := RenderLineWithOptions(sampleSnapshot(), "/Users/wsb", RenderOptions{Size: SizeXS})
 	want := "🤖 gpt-5.5 ⚡xhigh 📂 ~/my-project 🌿(main)\n" +
-		"🧠 ███░░░░░░░  5H ░░░░░░░░░░  7D ███░░░░░░░"
+		"🧠 ███░░░░░░░  🚀 5H ░░░░░░░░░░  📅 7D ███░░░░░░░"
 	if got != want {
 		t.Fatalf("xs =\n%q\nwant\n%q", got, want)
 	}
