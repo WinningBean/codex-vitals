@@ -33,6 +33,12 @@ height="${CODEX_VITALS_TMUX_HEIGHT:-$dh}"
 command -v codex-vitals >/dev/null 2>&1 || { echo "codex-vitals-panel: codex-vitals not found on PATH" >&2; exit 1; }
 command -v tmux >/dev/null 2>&1 || { echo "codex-vitals-panel: tmux is required" >&2; exit 1; }
 
+# mouse off면 휠 스크롤이 화살표 키로 변환돼 대화 스크롤백을 볼 수 없으므로 안내만 출력한다.
+# (사용자 설정을 강제로 바꾸지 않는다 — 텍스트 선택 동작이 달라질 수 있어 opt-in으로 남긴다.)
+if [ "$(tmux show -gv mouse 2>/dev/null)" = "off" ]; then
+  echo "codex-vitals-panel: tmux 'mouse' is off — add 'set -g mouse on' to ~/.tmux.conf so the wheel scrolls the conversation" >&2
+fi
+
 if [ -n "${TMUX:-}" ]; then
   # Already in tmux: add the panel pane, run codex here, close the pane on exit.
   hud="$(tmux split-window -v -l "$height" -P -F '#{pane_id}' "$HUD_CMD")"

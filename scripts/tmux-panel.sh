@@ -56,5 +56,11 @@ esac
 height="${CODEX_VITALS_TMUX_HEIGHT:-$default_height}"
 
 # Split a bottom pane running the panel, then return focus to the original pane.
+# mouse off면 휠 스크롤이 화살표 키로 변환돼 대화 스크롤백을 볼 수 없으므로 안내만 출력한다.
+# (사용자 설정을 강제로 바꾸지 않는다 — 텍스트 선택 동작이 달라질 수 있어 opt-in으로 남긴다.)
+if [ "$(tmux show -gv mouse 2>/dev/null)" = "off" ]; then
+  echo "hint: tmux 'mouse' is off — add 'set -g mouse on' to ~/.tmux.conf so the wheel scrolls the conversation" >&2
+fi
+
 tmux split-window -v -l "$height" "$bin $*"
 tmux last-pane

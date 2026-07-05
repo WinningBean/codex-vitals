@@ -257,7 +257,13 @@ scripts/tmux-panel.sh -size xs
 CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-panel.sh -size xl
 ```
 
-패널 높이는 사이즈에 맞춰 자동 조정되며, `CODEX_VITALS_TMUX_HEIGHT`로 덮어쓸 수 있습니다. 포커스는 원래 패널로 돌아오고, 패널에서 Ctrl+C를 누르면 닫힙니다. 직접 실행할 수도 있습니다.
+패널 높이는 사이즈에 맞춰 자동 조정되며, `CODEX_VITALS_TMUX_HEIGHT`로 덮어쓸 수 있습니다. 포커스는 원래 패널로 돌아오고, 패널에서 Ctrl+C를 누르면 닫힙니다.
+
+> **스크롤백 팁:** `~/.tmux.conf`에 `set -g mouse on`을 추가하면 마우스 휠로 대화를
+> 스크롤할 수 있습니다. 이 설정이 없으면 tmux가 스크롤을 터미널에 넘기는데, 전체 화면
+> 앱에서는 스크롤이 화살표 키로 변환돼 대화가 아니라 Codex 입력 히스토리만 순환합니다.
+
+직접 실행할 수도 있습니다.
 
 ```bash
 # 한 번만 출력
