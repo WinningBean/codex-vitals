@@ -100,7 +100,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 
 ```text
 🤖 gpt-5.5 ⚡xhigh 📂 ~/Documents/Github/codex-vitals 🌿(main)
-🧠 █████░░░░░  🚀 5H ███████░░░  📅 7D ████░░░░░░
+🧠 █████░░░░░  🚀 ███████░░░  📅 ████░░░░░░
 ```
 
 **`s`**

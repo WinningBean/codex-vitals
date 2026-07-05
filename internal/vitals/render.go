@@ -133,10 +133,10 @@ func renderXS(s Snapshot, home string, color bool) string {
 
 	l2 := []string{"🧠 " + bar(s.Tokens.Context.Percent, 10, "context", color)}
 	if s.Tokens.Primary != nil {
-		l2 = append(l2, "🚀 5H "+bar(pct(s.Tokens.Primary), 10, "default", color))
+		l2 = append(l2, "🚀 "+bar(pct(s.Tokens.Primary), 10, "default", color))
 	}
 	if s.Tokens.Secondary != nil {
-		l2 = append(l2, "📅 7D "+bar(pct(s.Tokens.Secondary), 10, "7d", color))
+		l2 = append(l2, "📅 "+bar(pct(s.Tokens.Secondary), 10, "7d", color))
 	}
 	return strings.Join(l1, " ") + "\n" + strings.Join(l2, "  ")
 }

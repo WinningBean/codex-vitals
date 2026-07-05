@@ -107,7 +107,7 @@ func TestRenderSizeXS(t *testing.T) {
 	noEnv(t)
 	got := RenderLineWithOptions(sampleSnapshot(), "/Users/wsb", RenderOptions{Size: SizeXS})
 	want := "🤖 gpt-5.5 ⚡xhigh 📂 ~/my-project 🌿(main)\n" +
-		"🧠 ███░░░░░░░  🚀 5H ░░░░░░░░░░  📅 7D ███░░░░░░░"
+		"🧠 ███░░░░░░░  🚀 ░░░░░░░░░░  📅 ███░░░░░░░"
 	if got != want {
 		t.Fatalf("xs =\n%q\nwant\n%q", got, want)
 	}

@@ -100,7 +100,7 @@ Colors show in a real terminal; GitHub may not render the ANSI colors in the tex
 
 ```text
 🤖 gpt-5.5 ⚡xhigh 📂 ~/Documents/Github/codex-vitals 🌿(main)
-🧠 █████░░░░░  🚀 5H ███████░░░  📅 7D ████░░░░░░
+🧠 █████░░░░░  🚀 ███████░░░  📅 ████░░░░░░
 ```
 
 **`s`**

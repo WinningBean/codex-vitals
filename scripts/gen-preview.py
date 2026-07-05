@@ -61,8 +61,8 @@ def size_xs():
         [("🤖 ", DIM), ("gpt-5.5 ⚡xhigh", TEAL), (" 📂 ", DIM),
          ("~/Documents/Github/codex-vitals", PATH), (" ", DIM), ("🌿(main)", GREEN)],
         [("🧠 ", DIM)] + bar_segments(CTX, 10, "context") +
-        [("  🚀 5H ", DIM)] + bar_segments(H5, 10, "default") +
-        [("  📅 7D ", DIM)] + bar_segments(D7, 10, "7d"),
+        [("  🚀 ", DIM)] + bar_segments(H5, 10, "default") +
+        [("  📅 ", DIM)] + bar_segments(D7, 10, "7d"),
     ]
 
 def size_s():
