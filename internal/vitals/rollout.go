@@ -80,10 +80,11 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 	if rolloutPath == "" {
 		rolloutPath, err = FindLatestRollout(options.CodexHome, options.CWD, options.Since)
 		if err != nil {
-			return Snapshot{
-				Model:  SelectModel(ModelInfo{}, config),
-				Config: config,
-			}, err
+			// No session for this panel yet, but 5h/weekly limits are
+			// account-wide, so carry them over so the gauges aren't blank.
+			snapshot := Snapshot{Model: SelectModel(ModelInfo{}, config), Config: config}
+			carryRateLimits(&snapshot, options)
+			return snapshot, err
 		}
 	}
 
@@ -94,7 +95,31 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 	snapshot.RolloutPath = rolloutPath
 	snapshot.Config = config
 	snapshot.Model = SelectModelForContextMode(snapshot.Model, config, options.ContextMode)
+	carryRateLimits(&snapshot, options)
 	return snapshot, nil
+}
+
+// carryRateLimits fills in the account-wide 5h/weekly limits from the most
+// recent rollout of any session when the current one hasn't reported them yet,
+// so those gauges show real values from the start instead of popping in.
+func carryRateLimits(snap *Snapshot, options LoadOptions) {
+	if snap.Tokens.Primary != nil && snap.Tokens.Secondary != nil {
+		return
+	}
+	latest, err := FindLatestRollout(options.CodexHome, "", 0)
+	if err != nil || latest == snap.RolloutPath {
+		return
+	}
+	prev, err := ParseRolloutFileWithContextMode(latest, options.ContextMode)
+	if err != nil {
+		return
+	}
+	if snap.Tokens.Primary == nil {
+		snap.Tokens.Primary = prev.Tokens.Primary
+	}
+	if snap.Tokens.Secondary == nil {
+		snap.Tokens.Secondary = prev.Tokens.Secondary
+	}
 }
 
 func FindLatestRollout(codexHome, cwd string, since int64) (string, error) {
