@@ -204,3 +204,18 @@ func TestRenderWaiting(t *testing.T) {
 		t.Fatalf("empty snapshot = %q", got)
 	}
 }
+
+// Margin indents every rendered line; 0 leaves output flush.
+func TestRenderMargin(t *testing.T) {
+	noEnv(t)
+	got := RenderLineWithOptions(sampleSnapshot(), "/Users/wsb", RenderOptions{Size: SizeL, Margin: 3})
+	for _, line := range strings.Split(got, "\n") {
+		if !strings.HasPrefix(line, "   ") {
+			t.Fatalf("line not indented by 3: %q", line)
+		}
+	}
+	got = RenderLineWithOptions(sampleSnapshot(), "/Users/wsb", RenderOptions{Size: SizeL, Margin: 0})
+	if strings.HasPrefix(got, " ") {
+		t.Fatalf("margin 0 should not indent: %q", got)
+	}
+}

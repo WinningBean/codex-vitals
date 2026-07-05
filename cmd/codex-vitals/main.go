@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ func main() {
 	codexHome := flag.String("codex-home", "", "path to CODEX_HOME; defaults to $CODEX_HOME or ~/.codex")
 	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or patched")
 	sizeValue := flag.String("size", "", "panel size: xs, s, m, l, or xl (default: ~/.config/codex-vitals/size, then CODEX_VITALS_SIZE, then m)")
+	marginValue := flag.Int("margin", envMargin(), "indent every line by N spaces to align with Codex's input (env: CODEX_VITALS_MARGIN)")
 	noColor := flag.Bool("no-color", false, "disable ANSI colors")
 	interval := flag.Duration("interval", time.Second, "refresh interval")
 	once := flag.Bool("once", false, "render once and exit")
@@ -59,7 +61,7 @@ func main() {
 		ContextMode: contextMode,
 	}
 	if *once {
-		fmt.Println(render(options, homeDir, newRenderOptions(resolveSize(explicitPtr), !*noColor)))
+		fmt.Println(render(options, homeDir, newRenderOptions(resolveSize(explicitPtr), !*noColor, *marginValue)))
 		return
 	}
 
@@ -68,7 +70,7 @@ func main() {
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()
 
-	renderOptions := newRenderOptions(resolveSize(explicitPtr), !*noColor)
+	renderOptions := newRenderOptions(resolveSize(explicitPtr), !*noColor, *marginValue)
 	frame := render(options, homeDir, renderOptions)
 	fmt.Print(frame)
 	prevLines := strings.Count(frame, "\n") + 1
@@ -102,11 +104,20 @@ func render(options vitals.LoadOptions, homeDir string, renderOptions vitals.Ren
 	return vitals.RenderLineWithOptions(snapshot, homeDir, renderOptions)
 }
 
-func newRenderOptions(size vitals.Size, color bool) vitals.RenderOptions {
+func newRenderOptions(size vitals.Size, color bool, margin int) vitals.RenderOptions {
 	return vitals.RenderOptions{
-		Size:  size,
-		Color: color,
+		Size:   size,
+		Color:  color,
+		Margin: margin,
 	}
+}
+
+// envMargin reads a non-negative CODEX_VITALS_MARGIN, defaulting to 0.
+func envMargin() int {
+	if n, err := strconv.Atoi(os.Getenv("CODEX_VITALS_MARGIN")); err == nil && n >= 0 {
+		return n
+	}
+	return 0
 }
 
 // resolveSize picks the panel size: an explicit -size flag pins it, otherwise

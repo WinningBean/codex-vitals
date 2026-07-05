@@ -4,6 +4,7 @@
 #
 #   CODEX_CLI_PATH            path to the codex binary (default: codex on PATH)
 #   CODEX_VITALS_TMUX_HEIGHT  override the panel pane height
+#   CODEX_VITALS_MARGIN       left indent (spaces) to align with Codex input (default 2)
 #
 # The panel size comes from ~/.config/codex-vitals/size (set it with
 # `install.sh | bash -s -- <size>`); a running panel picks up changes live.
@@ -13,7 +14,7 @@ set -euo pipefail
 CODEX_BIN="${CODEX_CLI_PATH:-codex}"
 # No -size: the binary resolves the size from the config file every second,
 # so changing the file updates the panel live.
-HUD_CMD="codex-vitals -context-mode patched -interval 1s"
+HUD_CMD="codex-vitals -context-mode patched -margin ${CODEX_VITALS_MARGIN:-2} -interval 1s"
 
 # Size the pane to the configured size (file > env > m).
 size_file="${XDG_CONFIG_HOME:-$HOME/.config}/codex-vitals/size"

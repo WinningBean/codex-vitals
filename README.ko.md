@@ -200,6 +200,9 @@ codex-vitals -once -context-mode patched -size l
     패널 사이즈: xs, s, m, l, xl
     (기본값: ~/.config/codex-vitals/size, 그다음 CODEX_VITALS_SIZE, 그다음 m)
 
+-margin int
+    codex 입력칸과 정렬되도록 각 줄을 N칸 들여씀 (환경변수: CODEX_VITALS_MARGIN)
+
 -interval duration
     반복 출력 주기. 기본값은 1s
 

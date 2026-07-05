@@ -200,6 +200,9 @@ codex-vitals -once -context-mode patched -size l
     panel size: xs, s, m, l, xl
     (default: ~/.config/codex-vitals/size, then CODEX_VITALS_SIZE, then m)
 
+-margin int
+    indent every line by N spaces to align with Codex's input (env: CODEX_VITALS_MARGIN)
+
 -interval duration
     Refresh interval. Default 1s
 

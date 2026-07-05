@@ -92,6 +92,9 @@ func ConfiguredSize() (Size, bool) {
 type RenderOptions struct {
 	Size  Size
 	Color bool
+	// Margin indents every line by this many spaces, e.g. to line the panel
+	// up with Codex's input box.
+	Margin int
 }
 
 func RenderLine(snapshot Snapshot, homeDir string) string {
@@ -99,6 +102,10 @@ func RenderLine(snapshot Snapshot, homeDir string) string {
 }
 
 func RenderLineWithOptions(snapshot Snapshot, homeDir string, options RenderOptions) string {
+	return applyMargin(renderBody(snapshot, homeDir, options), options.Margin)
+}
+
+func renderBody(snapshot Snapshot, homeDir string, options RenderOptions) string {
 	if formatModel(snapshot.Model) == "" && !snapshot.Tokens.HasTokens && snapshot.Session.CWD == "" {
 		return "codex-vitals: waiting for Codex session data"
 	}
@@ -114,6 +121,15 @@ func RenderLineWithOptions(snapshot Snapshot, homeDir string, options RenderOpti
 	default:
 		return renderM(snapshot, homeDir, options.Color)
 	}
+}
+
+// applyMargin indents every line of s by margin spaces.
+func applyMargin(s string, margin int) string {
+	if margin <= 0 {
+		return s
+	}
+	pad := strings.Repeat(" ", margin)
+	return pad + strings.ReplaceAll(s, "\n", "\n"+pad)
 }
 
 // --- size layouts ----------------------------------------------------------
