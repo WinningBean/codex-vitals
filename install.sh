@@ -4,7 +4,7 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash
 #
-# Pick a default HUD size in one shot (xs, s, m, l, xl):
+# Pick a default panel size in one shot (xs, s, m, l, xl):
 #
 #   curl -fsSL https://raw.githubusercontent.com/WinningBean/codex-vitals/main/install.sh | bash -s -- xl
 #
@@ -44,7 +44,7 @@ persist_size() {
   touch "$rc"
   grep -v 'export CODEX_VITALS_SIZE=' "$rc" > "${rc}.codex-vitals.tmp" 2>/dev/null || true
   mv "${rc}.codex-vitals.tmp" "$rc"
-  printf 'export CODEX_VITALS_SIZE=%s  # codex-vitals default HUD size\n' "$size" >> "$rc"
+  printf 'export CODEX_VITALS_SIZE=%s  # codex-vitals default panel size\n' "$size" >> "$rc"
   info "Set default size '${size}' in ${rc/#$HOME/~}"
 }
 

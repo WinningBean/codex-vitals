@@ -23,7 +23,7 @@ var (
 	cDirty  = rgb{223, 142, 29}
 )
 
-// Size controls how much the HUD shows, xs (least) to xl (most).
+// Size controls how much the panel shows, xs (least) to xl (most).
 type Size string
 
 const (
@@ -154,7 +154,7 @@ func renderM(s Snapshot, home string, color bool) string {
 		lines = append(lines, line)
 	}
 	if s.Tokens.HasTokens {
-		lines = append(lines, "🧠 "+colorizeIf("Context", cCtx, color)+" "+
+		lines = append(lines, "🧠 "+colorizeIf(padLabel("Context"), cCtx, color)+" "+
 			bar(s.Tokens.Context.Percent, 30, "context", color)+" "+
 			pctText(s.Tokens.Context.Percent, "context", color)+" "+dimIf("used", color))
 	}
@@ -231,7 +231,7 @@ func usageLine(icon, label string, percent, width int, kind string, labelColor r
 	if suffix != "" {
 		value += " " + suffix
 	}
-	labelText := colorizeIf(label, labelColor, color)
+	labelText := colorizeIf(padLabel(label), labelColor, color)
 	valueText := value
 	if color {
 		valueText = colorize(value, gradientColor(float64(percent), kind))
@@ -241,6 +241,17 @@ func usageLine(icon, label string, percent, width int, kind string, labelColor r
 		line += " " + dimIf(extra, color)
 	}
 	return line
+}
+
+// usageLabelWidth pads the Context / Usage 5H / Usage 7D labels to a common
+// width so their bars start at the same column across sizes.
+const usageLabelWidth = 8
+
+func padLabel(label string) string {
+	if pad := usageLabelWidth - len(label); pad > 0 {
+		return label + strings.Repeat(" ", pad)
+	}
+	return label
 }
 
 func modelBolt(m ModelInfo) string {

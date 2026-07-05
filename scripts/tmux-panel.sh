@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Add a codex-vitals HUD pane to the bottom of the current tmux window.
+# Add a codex-vitals panel pane to the bottom of the current tmux window.
 #
 #   scripts/tmux-hud.sh                 # size m (default), refreshing every 1s
 #   scripts/tmux-hud.sh -size l
@@ -8,7 +8,7 @@
 #   CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-hud.sh -size xl
 #
 # Run it from inside a tmux session (e.g. the one where Codex is running).
-# Focus returns to your original pane; Ctrl+C in the HUD pane closes it.
+# Focus returns to your original pane; Ctrl+C in the panel pane closes it.
 #
 set -euo pipefail
 
@@ -53,6 +53,6 @@ case "$size" in
 esac
 height="${CODEX_VITALS_TMUX_HEIGHT:-$default_height}"
 
-# Split a bottom pane running the HUD, then return focus to the original pane.
+# Split a bottom pane running the panel, then return focus to the original pane.
 tmux split-window -v -l "$height" "$bin $*"
 tmux last-pane

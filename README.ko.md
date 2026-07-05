@@ -2,7 +2,7 @@
 
 # 🫀 codex-vitals
 
-**OpenAI Codex CLI session을 위한 가벼운 Go HUD**
+**OpenAI Codex CLI session을 위한 가벼운 Go 패널**
 모델, reasoning effort, git 상태, 현재 경로, context 사용량, 5시간/7일 usage limit을 한눈에 보여줍니다.
 
 [English](./README.md) · [한국어](./README.ko.md)
@@ -15,7 +15,7 @@
 <img src="https://img.shields.io/badge/license-MIT-fab387?style=flat-square" alt="MIT"/>
 
 <br/>
-<img src="./assets/preview.svg" alt="codex-vitals HUD 미리보기" width="820"/>
+<img src="./assets/preview.svg" alt="codex-vitals 패널 미리보기" width="820"/>
 
 </div>
 
@@ -84,7 +84,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 
 ## 📐 사이즈
 
-`-size`(기본 `m`)로 HUD가 보여주는 정보량을 고릅니다. CC-statusline에서 영감을 받았습니다.
+`-size`(기본 `m`)로 패널이 보여주는 정보량을 고릅니다.
 
 | 사이즈 | 줄 | 표시 |
 |--------|:--:|------|
@@ -165,16 +165,16 @@ codex-vitals -once -size xs   # 또는 s, m, l, xl
 
 ## 🧠 context% 계산 기준
 
-`codex-vitals`는 stock Codex와 patched Codex HUD를 모두 맞출 수 있도록 두 가지 계산 모드를 제공합니다.
+`codex-vitals`는 stock Codex와 patched Codex build를 모두 맞출 수 있도록 두 가지 계산 모드를 제공합니다.
 
 | 모드 | 공식 | 맞추는 대상 |
 |------|------|-------------|
 | `codex` 기본값 | `(total_tokens - 12000) / (model_context_window - 12000)` | stock Codex 상태 표시 |
-| `current-hud` | `(input_tokens + cached_input_tokens) / model_context_window` | 현재 patched Codex HUD |
+| `current-hud` | `(input_tokens + cached_input_tokens) / model_context_window` | 현재 patched Codex build |
 
 stock Codex는 system prompt, tools, `/compact` 여유 공간을 위해 baseline `12000` tokens를 예약합니다. 그래서 기본 `codex` 모드는 `total_tokens`와 `model_context_window`에서 각각 `12000`을 차감합니다. window가 `12000` 이하인 작은 모델에서는 raw 비율로 폴백해, 사용률이 `0%`나 `100%`로 잘못 표시되지 않습니다.
 
-현재 사용 중인 HUD와 숫자가 맞지 않는다면 patched Codex HUD 공식을 쓰고 있을 가능성이 큽니다. 이 경우 `current-hud`를 사용하세요.
+숫자가 Codex 표시와 맞지 않는다면 patched Codex build 공식을 쓰고 있을 가능성이 큽니다. 이 경우 `current-hud`를 사용하세요.
 
 ```bash
 codex-vitals -once -context-mode current-hud -size l
@@ -195,7 +195,7 @@ codex-vitals -once -context-mode current-hud -size l
     context 사용률 계산 방식: codex 또는 current-hud
 
 -size string
-    HUD 사이즈: xs, s, m, l, xl (기본 m; 환경변수: CODEX_VITALS_SIZE)
+    패널 사이즈: xs, s, m, l, xl (기본 m; 환경변수: CODEX_VITALS_SIZE)
 
 -interval duration
     반복 출력 주기. 기본값은 1s
@@ -242,16 +242,16 @@ codex-vitals \
 
 ## 🧩 tmux / footer에서 쓰기
 
-Codex가 실행 중인 tmux 세션 안에서 아래를 실행하면 하단에 HUD 패널이 붙습니다.
+Codex가 실행 중인 tmux 세션 안에서 아래를 실행하면 하단에 패널이 붙습니다.
 
 ```bash
-scripts/tmux-hud.sh                 # 사이즈 m, 1초마다 갱신
-scripts/tmux-hud.sh -size l
-scripts/tmux-hud.sh -size xs
-CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-hud.sh -size xl
+scripts/tmux-panel.sh                 # 사이즈 m, 1초마다 갱신
+scripts/tmux-panel.sh -size l
+scripts/tmux-panel.sh -size xs
+CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-panel.sh -size xl
 ```
 
-패널 높이는 사이즈에 맞춰 자동 조정되며, `CODEX_VITALS_TMUX_HEIGHT`로 덮어쓸 수 있습니다. 포커스는 원래 패널로 돌아오고, HUD 패널에서 Ctrl+C를 누르면 닫힙니다. 직접 실행할 수도 있습니다.
+패널 높이는 사이즈에 맞춰 자동 조정되며, `CODEX_VITALS_TMUX_HEIGHT`로 덮어쓸 수 있습니다. 포커스는 원래 패널로 돌아오고, 패널에서 Ctrl+C를 누르면 닫힙니다. 직접 실행할 수도 있습니다.
 
 ```bash
 # 한 번만 출력
@@ -302,11 +302,11 @@ rm ./codex-vitals
 **색상이 README나 채팅에서 안 보입니다.**
 Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경우가 많습니다. 실제 터미널에서 `--no-color` 없이 실행하면 색상이 보입니다.
 
-**현재 HUD와 숫자가 조금 다릅니다.**
-실시간으로 rollout이 계속 갱신되기 때문에 실행 시점 차이로 token count가 1k 단위로 흔들릴 수 있습니다. 현재 HUD와 공식을 맞추려면 `-context-mode current-hud`를 사용하세요.
+**Codex 표시와 숫자가 조금 다릅니다.**
+실시간으로 rollout이 계속 갱신되기 때문에 실행 시점 차이로 token count가 1k 단위로 흔들릴 수 있습니다. Codex 표시와 공식을 맞추려면 `-context-mode current-hud`를 사용하세요.
 
 **5H가 left가 아니라 used로 보입니다.**
-현재 Codex HUD와 맞추기 위해 usage limit을 사용률(얼마나 썼는지) 기준으로 보여줍니다. reset 시각은 `l`, `xl` 사이즈의 바 옆에 함께 표시됩니다.
+현재 Codex 표시와 맞추기 위해 usage limit을 사용률(얼마나 썼는지) 기준으로 보여줍니다. reset 시각은 `l`, `xl` 사이즈의 바 옆에 함께 표시됩니다.
 
 **Node가 필요한가요?**
 아니요. `codex-vitals` 자체는 Go 바이너리입니다.
@@ -318,7 +318,7 @@ Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경
 
 ## Acknowledgements
 
-- 상주형 터미널 HUD라는 아이디어의 원조는 [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (Claude Code용)입니다.
+- 상주형 터미널 패널이라는 아이디어의 원조는 [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (Claude Code용)입니다.
 - 레이아웃과 gradient bar는 [AwesomeJun/CC-statusline](https://github.com/AwesomeJun/CC-statusline)에서 영감을 받았습니다.
 - [openai/codex](https://github.com/openai/codex)가 기록하는 session 데이터를 읽습니다.
 

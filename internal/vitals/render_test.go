@@ -43,7 +43,7 @@ func TestRenderLineDefaultsToMedium(t *testing.T) {
 	got := RenderLine(sampleSnapshot(), "/Users/wsb")
 	want := "🤖 gpt-5.5 ⚡xhigh │ no git │ no env\n" +
 		"📂 ~/my-project 🌿(main)\n" +
-		"🧠 Context ████████░░░░░░░░░░░░░░░░░░░░░░ 25% used\n" +
+		"🧠 Context  ████████░░░░░░░░░░░░░░░░░░░░░░ 25% used\n" +
 		"🚀 Usage 5H ░░░░░░░░░░ 1% │ 📅 7D ███░░░░░░░ 26%"
 	if got != want {
 		t.Fatalf("RenderLine() =\n%q\nwant\n%q", got, want)
@@ -121,7 +121,7 @@ func TestRenderSizeLShowsResetsAndTokens(t *testing.T) {
 		}
 	}
 	// 20-wide context bar: 25% -> 5 filled blocks.
-	if !strings.Contains(got, "🧠 Context "+strings.Repeat("█", 5)+strings.Repeat("░", 15)) {
+	if !strings.Contains(got, "🧠 Context  "+strings.Repeat("█", 5)+strings.Repeat("░", 15)) {
 		t.Fatalf("l context bar not 20-wide:\n%s", got)
 	}
 }
@@ -131,7 +131,7 @@ func TestRenderSizeXLUsesWideBars(t *testing.T) {
 	noEnv(t)
 	got := RenderLineWithOptions(sampleSnapshot(), "/Users/wsb", RenderOptions{Size: SizeXL})
 	// 40-wide context bar: 25% -> 10 filled blocks.
-	if !strings.Contains(got, "🧠 Context "+strings.Repeat("█", 10)+strings.Repeat("░", 30)) {
+	if !strings.Contains(got, "🧠 Context  "+strings.Repeat("█", 10)+strings.Repeat("░", 30)) {
 		t.Fatalf("xl context bar not 40-wide:\n%s", got)
 	}
 }
@@ -141,6 +141,29 @@ func TestRenderColorModel(t *testing.T) {
 	got := RenderLineWithOptions(sampleSnapshot(), "/Users/wsb", RenderOptions{Size: SizeXS, Color: true})
 	if !strings.HasPrefix(got, "🤖 \x1b[38;2;148;226;213mgpt-5.5 ⚡xhigh\x1b[0m") {
 		t.Fatalf("expected teal model prefix, got:\n%q", got)
+	}
+}
+
+// Context / 5H / 7D bars must start at the same column in l and xl.
+func TestUsageBarsAligned(t *testing.T) {
+	noEnv(t)
+	for _, size := range []Size{SizeL, SizeXL} {
+		got := RenderLineWithOptions(sampleSnapshot(), "/Users/wsb", RenderOptions{Size: size})
+		var cols []int
+		for _, line := range strings.Split(got, "\n") {
+			if strings.HasPrefix(line, "🧠") || strings.HasPrefix(line, "🚀") || strings.HasPrefix(line, "📅") {
+				i := strings.IndexAny(line, "█░")
+				cols = append(cols, len([]rune(line[:i])))
+			}
+		}
+		if len(cols) != 3 {
+			t.Fatalf("size %s: expected 3 usage bars, got %d", size, len(cols))
+		}
+		for _, c := range cols {
+			if c != cols[0] {
+				t.Fatalf("size %s bars not aligned: cols=%v\n%s", size, cols, got)
+			}
+		}
 	}
 }
 

@@ -2,7 +2,7 @@
 
 # 🫀 codex-vitals
 
-**A lightweight Go HUD for OpenAI Codex CLI sessions**
+**A lightweight Go panel for OpenAI Codex CLI sessions**
 See model, reasoning effort, git status, working directory, context usage, and 5-hour / weekly usage limits at a glance.
 
 [English](./README.md) · [한국어](./README.ko.md)
@@ -15,7 +15,7 @@ See model, reasoning effort, git status, working directory, context usage, and 5
 <img src="https://img.shields.io/badge/license-MIT-fab387?style=flat-square" alt="MIT"/>
 
 <br/>
-<img src="./assets/preview.svg" alt="codex-vitals HUD preview" width="820"/>
+<img src="./assets/preview.svg" alt="codex-vitals panel preview" width="820"/>
 
 </div>
 
@@ -84,7 +84,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 
 ## 📐 Sizes
 
-Pick how much the HUD shows with `-size` (default `m`), inspired by CC-statusline:
+Pick how much the panel shows with `-size` (default `m`):
 
 | Size | Lines | Shows |
 |------|:-----:|-------|
@@ -165,16 +165,16 @@ codex-vitals -once -size xs   # or s, m, l, xl
 
 ## 🧠 Context % calculation
 
-`codex-vitals` offers two modes so it can match both stock Codex and a patched Codex HUD.
+`codex-vitals` offers two modes so it can match both stock Codex and a patched Codex build.
 
 | Mode | Formula | Matches |
 |------|---------|---------|
 | `codex` (default) | `(total_tokens − 12000) / (model_context_window − 12000)` | stock Codex status line |
-| `current-hud` | `(input_tokens + cached_input_tokens) / model_context_window` | a patched Codex HUD |
+| `current-hud` | `(input_tokens + cached_input_tokens) / model_context_window` | a patched Codex build |
 
 Stock Codex reserves a `12000`-token baseline (system prompt, tools, and room to run `/compact`), so the default `codex` mode subtracts `12000` from both `total_tokens` and `model_context_window`. For small models whose window is `≤ 12000`, it falls back to the raw bounded ratio so usage is never reported as a misleading `0%` or `100%`.
 
-If the number doesn't match your running HUD, you're probably on a patched Codex build — use `current-hud`:
+If the number doesn't match what Codex shows, you're probably on a patched Codex build — use `current-hud`:
 
 ```bash
 codex-vitals -once -context-mode current-hud -size l
@@ -195,7 +195,7 @@ codex-vitals -once -context-mode current-hud -size l
     Context usage formula: codex or current-hud
 
 -size string
-    HUD size: xs, s, m, l, xl (default m; env: CODEX_VITALS_SIZE)
+    panel size: xs, s, m, l, xl (default m; env: CODEX_VITALS_SIZE)
 
 -interval duration
     Refresh interval. Default 1s
@@ -240,16 +240,16 @@ It finds the most recent Codex session and renders it; use `-rollout` to pin a s
 
 ## 🧩 Using it in tmux / as a footer
 
-From inside a tmux session (e.g. where Codex is running), add a HUD pane at the bottom:
+From inside a tmux session (e.g. where Codex is running), add a panel at the bottom:
 
 ```bash
-scripts/tmux-hud.sh                 # size m, refreshing every 1s
-scripts/tmux-hud.sh -size l
-scripts/tmux-hud.sh -size xs
-CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-hud.sh -size xl
+scripts/tmux-panel.sh                 # size m, refreshing every 1s
+scripts/tmux-panel.sh -size l
+scripts/tmux-panel.sh -size xs
+CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-panel.sh -size xl
 ```
 
-The pane height auto-fits the size; override it with `CODEX_VITALS_TMUX_HEIGHT`. Focus returns to your original pane; Ctrl+C in the HUD pane closes it. Or run it directly:
+The pane height auto-fits the size; override it with `CODEX_VITALS_TMUX_HEIGHT`. Focus returns to your original pane; Ctrl+C in the panel closes it. Or run it directly:
 
 ```bash
 # render once
@@ -300,11 +300,11 @@ rm ./codex-vitals
 **Colors don't show in the README or chat.**
 Markdown / chat renderers usually don't interpret ANSI escapes as colors. Run it in a real terminal without `--no-color` to see them.
 
-**The number differs slightly from my running HUD.**
-Rollouts update live, so token counts can shift by ~1k depending on when you run. To match your HUD's formula, use `-context-mode current-hud`.
+**The number differs slightly from what Codex shows.**
+Rollouts update live, so token counts can shift by ~1k depending on when you run. To match Codex's own formula, use `-context-mode current-hud`.
 
 **5H shows used, not left.**
-The HUD shows usage limits as used-percent (how much of the window you've spent) to match a running Codex HUD. Reset times are shown next to the `l` and `xl` bars.
+The panel shows usage limits as used-percent (how much of the window you've spent) to match a running Codex build. Reset times are shown next to the `l` and `xl` bars.
 
 **Do I need Node?**
 No. `codex-vitals` itself is a Go binary.
@@ -316,7 +316,7 @@ No. It uses standard emoji and Unicode block characters.
 
 ## Acknowledgements
 
-- The persistent terminal-HUD idea comes from [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (for Claude Code).
+- The persistent terminal-panel idea comes from [jarrodwatts/claude-hud](https://github.com/jarrodwatts/claude-hud) (for Claude Code).
 - The layout and gradient bar were inspired by [AwesomeJun/CC-statusline](https://github.com/AwesomeJun/CC-statusline).
 - Reads session data written by [openai/codex](https://github.com/openai/codex).
 
