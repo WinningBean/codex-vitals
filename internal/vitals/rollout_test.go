@@ -147,3 +147,61 @@ func TestParseRolloutCarriesForwardRateLimits(t *testing.T) {
 		t.Errorf("context percent = %d, want 28 (latest event)", got.Tokens.Context.Percent)
 	}
 }
+
+const sampleRollout = `{"timestamp":"2026-07-05T10:00:00Z","type":"session_meta","payload":{"id":"s-file","cwd":"/tmp/proj","model_provider":"openai","git":{"branch":"main"}}}
+{"timestamp":"2026-07-05T10:01:00Z","type":"turn_context","payload":{"model":"gpt-5.5","effort":"high"}}
+{"timestamp":"2026-07-05T10:02:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":50000},"total_token_usage":{"total_tokens":50000},"model_context_window":258400}}}
+`
+
+func writeRollout(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(sampleRollout), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestParseRolloutFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "rollout.jsonl")
+	writeRollout(t, path)
+
+	got, err := ParseRolloutFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Session.ID != "s-file" || got.Model.Model != "gpt-5.5" {
+		t.Fatalf("ParseRolloutFile got %+v", got.Session)
+	}
+
+	if _, err := ParseRolloutFileWithContextMode(path, ContextModePatched); err != nil {
+		t.Fatalf("ParseRolloutFileWithContextMode: %v", err)
+	}
+	if _, err := ParseRolloutFile(filepath.Join(t.TempDir(), "missing.jsonl")); err == nil {
+		t.Fatal("expected error for missing file")
+	}
+}
+
+func TestLoadSnapshot(t *testing.T) {
+	// RolloutPath pins a specific file.
+	path := filepath.Join(t.TempDir(), "pinned.jsonl")
+	writeRollout(t, path)
+	got, err := LoadSnapshot(LoadOptions{RolloutPath: path})
+	if err != nil || got.Session.ID != "s-file" {
+		t.Fatalf("LoadSnapshot(RolloutPath) = %+v, err %v", got.Session, err)
+	}
+
+	// CodexHome scans sessions/**/rollout-*.jsonl for the latest.
+	home := t.TempDir()
+	writeRollout(t, filepath.Join(home, "sessions", "2026", "07", "05", "rollout-abc.jsonl"))
+	got, err = LoadSnapshot(LoadOptions{CodexHome: home})
+	if err != nil || got.Session.ID != "s-file" {
+		t.Fatalf("LoadSnapshot(CodexHome) = %+v, err %v", got.Session, err)
+	}
+
+	// No rollout anywhere -> ErrNoRollout.
+	if _, err := LoadSnapshot(LoadOptions{CodexHome: t.TempDir()}); err != ErrNoRollout {
+		t.Fatalf("LoadSnapshot(empty) err = %v, want ErrNoRollout", err)
+	}
+}

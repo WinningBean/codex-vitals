@@ -101,3 +101,14 @@ func TestSelectModelForContextModePatchedKeepsTurnContext(t *testing.T) {
 		t.Fatalf("SelectModelForContextMode() = %+v, want %+v", got, turn)
 	}
 }
+
+func TestDefaultCodexHome(t *testing.T) {
+	t.Setenv("CODEX_HOME", "/custom/codex")
+	if got := DefaultCodexHome("/home/u"); got != "/custom/codex" {
+		t.Errorf("DefaultCodexHome(env) = %q, want /custom/codex", got)
+	}
+	t.Setenv("CODEX_HOME", "")
+	if got := DefaultCodexHome("/home/u"); got != filepath.Join("/home/u", ".codex") {
+		t.Errorf("DefaultCodexHome(default) = %q", got)
+	}
+}

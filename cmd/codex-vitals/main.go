@@ -30,27 +30,13 @@ func main() {
 			sizeExplicit = true
 		}
 	})
-	var explicitSize vitals.Size
+	var explicitPtr *vitals.Size
 	if sizeExplicit {
 		s, err := vitals.ParseSize(*sizeValue)
 		if err != nil {
 			exitErr(err)
 		}
-		explicitSize = s
-	}
-	resolveSize := func() vitals.Size {
-		if sizeExplicit {
-			return explicitSize
-		}
-		if s, ok := vitals.ConfiguredSize(); ok {
-			return s
-		}
-		if env := os.Getenv("CODEX_VITALS_SIZE"); env != "" {
-			if s, err := vitals.ParseSize(env); err == nil {
-				return s
-			}
-		}
-		return vitals.SizeM
+		explicitPtr = &s
 	}
 
 	homeDir, err := os.UserHomeDir()
@@ -73,7 +59,7 @@ func main() {
 		ContextMode: contextMode,
 	}
 	if *once {
-		fmt.Println(render(options, homeDir, newRenderOptions(resolveSize(), !*noColor)))
+		fmt.Println(render(options, homeDir, newRenderOptions(resolveSize(explicitPtr), !*noColor)))
 		return
 	}
 
@@ -82,7 +68,7 @@ func main() {
 	ticker := time.NewTicker(*interval)
 	defer ticker.Stop()
 
-	renderOptions := newRenderOptions(resolveSize(), !*noColor)
+	renderOptions := newRenderOptions(resolveSize(explicitPtr), !*noColor)
 	frame := render(options, homeDir, renderOptions)
 	fmt.Print(frame)
 	prevLines := strings.Count(frame, "\n") + 1
@@ -90,7 +76,7 @@ func main() {
 		select {
 		case <-ticker.C:
 			// Re-resolve the size each tick so config-file changes apply live.
-			renderOptions.Size = resolveSize()
+			renderOptions.Size = resolveSize(explicitPtr)
 			// Move the cursor back to the top of the previous frame and clear
 			// it, so multi-line output redraws in place instead of scrolling.
 			// Emitted together with the new frame in one write to avoid flicker.
@@ -121,6 +107,23 @@ func newRenderOptions(size vitals.Size, color bool) vitals.RenderOptions {
 		Size:  size,
 		Color: color,
 	}
+}
+
+// resolveSize picks the panel size: an explicit -size flag pins it, otherwise
+// the config file (read fresh) wins, then CODEX_VITALS_SIZE, then m.
+func resolveSize(explicit *vitals.Size) vitals.Size {
+	if explicit != nil {
+		return *explicit
+	}
+	if s, ok := vitals.ConfiguredSize(); ok {
+		return s
+	}
+	if env := os.Getenv("CODEX_VITALS_SIZE"); env != "" {
+		if s, err := vitals.ParseSize(env); err == nil {
+			return s
+		}
+	}
+	return vitals.SizeM
 }
 
 func exitErr(err error) {
