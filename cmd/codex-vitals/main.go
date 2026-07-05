@@ -61,6 +61,7 @@ func main() {
 		RolloutPath: *rolloutPath,
 		ContextMode: contextMode,
 		CWD:         cwd,
+		Since:       envSince(),
 	}
 	if *once {
 		fmt.Println(render(options, homeDir, newRenderOptions(resolveSize(explicitPtr), !*noColor, *marginValue)))
@@ -117,6 +118,14 @@ func newRenderOptions(size vitals.Size, color bool, margin int) vitals.RenderOpt
 // envMargin reads a non-negative CODEX_VITALS_MARGIN, defaulting to 0.
 func envMargin() int {
 	if n, err := strconv.Atoi(os.Getenv("CODEX_VITALS_MARGIN")); err == nil && n >= 0 {
+		return n
+	}
+	return 0
+}
+
+// envSince reads CODEX_VITALS_SINCE (unix seconds); 0 if unset/invalid.
+func envSince() int64 {
+	if n, err := strconv.ParseInt(os.Getenv("CODEX_VITALS_SINCE"), 10, 64); err == nil && n > 0 {
 		return n
 	}
 	return 0

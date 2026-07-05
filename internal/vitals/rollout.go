@@ -64,6 +64,10 @@ type LoadOptions struct {
 	// paired with one Codex doesn't show a different, more-recently-written
 	// session. Empty means "just take the globally latest rollout".
 	CWD string
+	// Since (unix seconds) restricts selection to sessions written on or after
+	// this time — the panel's launch time — so a brand-new panel ignores older
+	// sessions in the same directory. 0 disables the restriction.
+	Since int64
 }
 
 func LoadSnapshot(options LoadOptions) (Snapshot, error) {
@@ -74,7 +78,7 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 
 	rolloutPath := options.RolloutPath
 	if rolloutPath == "" {
-		rolloutPath, err = FindLatestRollout(options.CodexHome, options.CWD)
+		rolloutPath, err = FindLatestRollout(options.CodexHome, options.CWD, options.Since)
 		if err != nil {
 			return Snapshot{
 				Model:  SelectModel(ModelInfo{}, config),
@@ -93,7 +97,7 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 	return snapshot, nil
 }
 
-func FindLatestRollout(codexHome, cwd string) (string, error) {
+func FindLatestRollout(codexHome, cwd string, since int64) (string, error) {
 	sessionsDir := filepath.Join(codexHome, "sessions")
 	type rolloutFile struct {
 		path  string
@@ -126,8 +130,23 @@ func FindLatestRollout(codexHome, cwd string) (string, error) {
 	}
 	sort.Slice(files, func(i, j int) bool { return files[i].mtime.After(files[j].mtime) })
 
-	// Prefer the most recent rollout started in cwd, so a panel paired with one
-	// Codex isn't hijacked by another session that happens to write more often.
+	// Panel mode: a launch time was given, so bind to a session in cwd that has
+	// been written since the panel started. This excludes older, unrelated
+	// sessions in the same directory; nothing recent means "waiting".
+	if since > 0 {
+		for _, f := range files {
+			if f.mtime.Unix() < since {
+				break // files are newest-first
+			}
+			if cwd == "" || rolloutCWD(f.path) == cwd {
+				return f.path, nil
+			}
+		}
+		return "", ErrNoRollout
+	}
+
+	// Standalone: prefer the most recent rollout started in cwd, else the
+	// globally latest, so `codex-vitals` in any directory still shows something.
 	if cwd != "" {
 		const scan = 50
 		for i := 0; i < len(files) && i < scan; i++ {

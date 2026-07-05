@@ -108,7 +108,7 @@ func TestFindLatestRollout(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := FindLatestRollout(root, "")
+	got, err := FindLatestRollout(root, "", 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,12 +240,41 @@ func TestFindLatestRolloutPrefersCWD(t *testing.T) {
 	mine := write("rollout-a.jsonl", "/work/mine", time.Now().Add(-time.Hour))
 	write("rollout-b.jsonl", "/work/other", time.Now()) // newer, different session
 
-	got, err := FindLatestRollout(home, "/work/mine")
+	got, err := FindLatestRollout(home, "/work/mine", 0)
 	if err != nil || got != mine {
 		t.Fatalf("cwd match = %q (err %v), want %q", got, err, mine)
 	}
 	// No cwd falls back to the globally newest.
-	if got, _ := FindLatestRollout(home, ""); filepath.Base(got) != "rollout-b.jsonl" {
+	if got, _ := FindLatestRollout(home, "", 0); filepath.Base(got) != "rollout-b.jsonl" {
 		t.Fatalf("global latest = %q, want rollout-b.jsonl", got)
+	}
+}
+
+// A panel bound to a launch time ignores older sessions in the same directory.
+func TestFindLatestRolloutSince(t *testing.T) {
+	home := t.TempDir()
+	write := func(name string, mtime time.Time) string {
+		p := filepath.Join(home, "sessions", "2026", "07", "05", name)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(`{"type":"session_meta","payload":{"cwd":"/work"}}`+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(p, mtime, mtime); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	write("rollout-old.jsonl", time.Unix(1000, 0))
+	fresh := write("rollout-new.jsonl", time.Unix(3000, 0))
+
+	// since between the two: only the fresh session qualifies.
+	if got, err := FindLatestRollout(home, "/work", 2000); err != nil || got != fresh {
+		t.Fatalf("since=2000 = %q (err %v), want %q", got, err, fresh)
+	}
+	// since after both: nothing recent -> waiting.
+	if _, err := FindLatestRollout(home, "/work", 4000); err != ErrNoRollout {
+		t.Fatalf("since=4000 err = %v, want ErrNoRollout", err)
 	}
 }

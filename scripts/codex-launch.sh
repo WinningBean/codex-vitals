@@ -12,9 +12,12 @@
 set -euo pipefail
 
 CODEX_BIN="${CODEX_CLI_PATH:-codex}"
+# CODEX_VITALS_SINCE = panel launch time, so the panel binds to the session
+# started with it and ignores older sessions in the same directory.
+SINCE="${CODEX_VITALS_SINCE:-$(date +%s)}"
 # No -size: the binary resolves the size from the config file every second,
 # so changing the file updates the panel live.
-HUD_CMD="codex-vitals -context-mode patched -margin ${CODEX_VITALS_MARGIN:-2} -interval 1s"
+HUD_CMD="CODEX_VITALS_SINCE=$SINCE codex-vitals -context-mode patched -margin ${CODEX_VITALS_MARGIN:-2} -interval 1s"
 
 # Size the pane to the configured size (file > env > m).
 size_file="${XDG_CONFIG_HOME:-$HOME/.config}/codex-vitals/size"
@@ -38,6 +41,6 @@ if [ -n "${TMUX:-}" ]; then
   "$CODEX_BIN" "$@"
 else
   # Not in tmux: spin up a session that re-runs this script inside tmux.
-  inner="CODEX_CLI_PATH=$(printf '%q' "$CODEX_BIN") CODEX_VITALS_TMUX_HEIGHT=$(printf '%q' "$height") $(printf '%q ' "$0" "$@")"
+  inner="CODEX_CLI_PATH=$(printf '%q' "$CODEX_BIN") CODEX_VITALS_TMUX_HEIGHT=$(printf '%q' "$height") CODEX_VITALS_SINCE=$(printf '%q' "$SINCE") $(printf '%q ' "$0" "$@")"
   exec tmux new-session "$inner"
 fi
