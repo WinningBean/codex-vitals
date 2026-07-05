@@ -255,7 +255,14 @@ scripts/tmux-panel.sh -size xs
 CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-panel.sh -size xl
 ```
 
-The pane height auto-fits the size; override it with `CODEX_VITALS_TMUX_HEIGHT`. Focus returns to your original pane; Ctrl+C in the panel closes it. Or run it directly:
+The pane height auto-fits the size; override it with `CODEX_VITALS_TMUX_HEIGHT`. Focus returns to your original pane; Ctrl+C in the panel closes it.
+
+> **Scrollback tip:** enable `set -g mouse on` in your `~/.tmux.conf` so the mouse
+> wheel scrolls the conversation. Without it, tmux leaves scroll to the terminal,
+> which (with a full-screen app) sends arrow keys — so the wheel only cycles Codex's
+> input history instead of revealing the conversation above.
+
+Or run it directly:
 
 ```bash
 # render once
