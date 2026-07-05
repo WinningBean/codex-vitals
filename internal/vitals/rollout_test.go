@@ -278,3 +278,14 @@ func TestFindLatestRolloutSince(t *testing.T) {
 		t.Fatalf("since=4000 err = %v, want ErrNoRollout", err)
 	}
 }
+
+// Before a session exists, the panel still shows its own working directory.
+func TestLoadSnapshotUsesCWDBeforeSession(t *testing.T) {
+	snap, err := LoadSnapshot(LoadOptions{CodexHome: t.TempDir(), CWD: "/work/here"})
+	if err != ErrNoRollout {
+		t.Fatalf("err = %v, want ErrNoRollout", err)
+	}
+	if snap.Session.CWD != "/work/here" {
+		t.Fatalf("Session.CWD = %q, want /work/here", snap.Session.CWD)
+	}
+}

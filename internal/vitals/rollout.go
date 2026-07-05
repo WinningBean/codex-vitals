@@ -83,6 +83,7 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 			// No session for this panel yet, but 5h/weekly limits are
 			// account-wide, so carry them over so the gauges aren't blank.
 			snapshot := Snapshot{Model: SelectModel(ModelInfo{}, config), Config: config}
+			snapshot.Session.CWD = options.CWD
 			carryRateLimits(&snapshot, options)
 			return snapshot, err
 		}
@@ -95,6 +96,9 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 	snapshot.RolloutPath = rolloutPath
 	snapshot.Config = config
 	snapshot.Model = SelectModelForContextMode(snapshot.Model, config, options.ContextMode)
+	if snapshot.Session.CWD == "" {
+		snapshot.Session.CWD = options.CWD
+	}
 	carryRateLimits(&snapshot, options)
 	return snapshot, nil
 }
