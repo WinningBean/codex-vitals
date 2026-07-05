@@ -141,9 +141,9 @@ func SelectModel(turn ModelInfo, config Config) ModelInfo {
 	return turn
 }
 
-func SelectModelForContextMode(turn ModelInfo, config Config, mode ContextMode) ModelInfo {
-	if mode == ContextModePatched && turn.HasTurn {
-		return turn
-	}
+func SelectModelForContextMode(turn ModelInfo, config Config, _ ContextMode) ModelInfo {
+	// Model selection is independent of the context-% mode: SelectModel already
+	// prefers config.toml when it changed (via /model) after the last turn, so
+	// the model reflects /model live instead of the stale per-turn record.
 	return SelectModel(turn, config)
 }

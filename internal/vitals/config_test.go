@@ -82,23 +82,21 @@ func TestSelectModelKeepsNewerTurnContext(t *testing.T) {
 	}
 }
 
-func TestSelectModelForContextModePatchedKeepsTurnContext(t *testing.T) {
+func TestSelectModelForContextModeReflectsNewerConfig(t *testing.T) {
 	turnTime := time.Date(2026, time.July, 3, 9, 0, 0, 0, time.UTC)
-	turn := ModelInfo{
-		Model:     "gpt-5.5",
-		Effort:    "xhigh",
-		Timestamp: turnTime,
-		HasTurn:   true,
-	}
-	config := Config{
-		Model:  "gpt-5.5",
-		Effort: "medium",
-		MTime:  turnTime.Add(time.Hour),
-	}
+	turn := ModelInfo{Model: "gpt-5.5", Effort: "xhigh", Timestamp: turnTime, HasTurn: true}
+	// config.toml changed (via /model) after the last turn: effort -> medium.
+	config := Config{Model: "gpt-5.5", Effort: "medium", MTime: turnTime.Add(time.Hour)}
 
 	got := SelectModelForContextMode(turn, config, ContextModePatched)
-	if got != turn {
-		t.Fatalf("SelectModelForContextMode() = %+v, want %+v", got, turn)
+	if got.Effort != "medium" {
+		t.Fatalf("effort = %q, want medium (config is newer than the last turn)", got.Effort)
+	}
+
+	// When config predates the turn, the session's own model/effort stays.
+	stale := Config{Model: "gpt-5.5", Effort: "medium", MTime: turnTime.Add(-time.Hour)}
+	if got := SelectModelForContextMode(turn, stale, ContextModePatched); got != turn {
+		t.Fatalf("stale config = %+v, want %+v", got, turn)
 	}
 }
 
