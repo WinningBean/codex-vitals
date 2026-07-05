@@ -118,8 +118,8 @@ func TestCalculateContextUsage(t *testing.T) {
 	}
 }
 
-func TestCalculateCurrentHUDContextUsage(t *testing.T) {
-	got := CalculateCurrentHUDContextUsage(
+func TestCalculatePatchedContextUsage(t *testing.T) {
+	got := CalculatePatchedContextUsage(
 		/*inputTokens*/ 119642,
 		/*cachedInputTokens*/ 116608,
 		/*contextWindow*/ 258400,
@@ -130,17 +130,20 @@ func TestCalculateCurrentHUDContextUsage(t *testing.T) {
 		Percent:     91,
 	}
 	if got != want {
-		t.Fatalf("CalculateCurrentHUDContextUsage() = %+v, want %+v", got, want)
+		t.Fatalf("CalculatePatchedContextUsage() = %+v, want %+v", got, want)
 	}
 }
 
 func TestParseContextMode(t *testing.T) {
-	got, err := ParseContextMode("current-hud")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got != ContextModeCurrentHUD {
-		t.Fatalf("ParseContextMode() = %q, want %q", got, ContextModeCurrentHUD)
+	// "patched" is canonical; "current-hud" stays as a back-compat alias.
+	for _, in := range []string{"patched", "current-hud"} {
+		got, err := ParseContextMode(in)
+		if err != nil {
+			t.Fatalf("ParseContextMode(%q): %v", in, err)
+		}
+		if got != ContextModePatched {
+			t.Fatalf("ParseContextMode(%q) = %q, want %q", in, got, ContextModePatched)
+		}
 	}
 
 	if _, err := ParseContextMode("bad"); err != ErrInvalidContextMode {

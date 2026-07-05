@@ -7,8 +7,8 @@ const baselineTokens int64 = 12000
 type ContextMode string
 
 const (
-	ContextModeCodex      ContextMode = "codex"
-	ContextModeCurrentHUD ContextMode = "current-hud"
+	ContextModeCodex   ContextMode = "codex"
+	ContextModePatched ContextMode = "patched"
 )
 
 // ContextUsage is the effective context-window usage Codex displays after
@@ -31,8 +31,8 @@ func ParseContextMode(value string) (ContextMode, error) {
 	switch ContextMode(value) {
 	case "", ContextModeCodex:
 		return ContextModeCodex, nil
-	case ContextModeCurrentHUD:
-		return ContextModeCurrentHUD, nil
+	case ContextModePatched, "current-hud": // current-hud kept as a back-compat alias
+		return ContextModePatched, nil
 	default:
 		return "", ErrInvalidContextMode
 	}
@@ -43,13 +43,13 @@ var ErrInvalidContextMode = errInvalidContextMode{}
 type errInvalidContextMode struct{}
 
 func (errInvalidContextMode) Error() string {
-	return "context mode must be one of: codex, current-hud"
+	return "context mode must be one of: codex, patched"
 }
 
 func CalculateContextUsageForMode(usage TokenUsage, contextWindow int64, mode ContextMode) ContextUsage {
 	switch mode {
-	case ContextModeCurrentHUD:
-		return CalculateCurrentHUDContextUsage(usage.InputTokens, usage.CachedInputTokens, contextWindow)
+	case ContextModePatched:
+		return CalculatePatchedContextUsage(usage.InputTokens, usage.CachedInputTokens, contextWindow)
 	case ContextModeCodex, "":
 		return CalculateContextUsage(usage.TotalTokens, contextWindow)
 	default:
@@ -107,7 +107,7 @@ func percentOf(used, total int64) int {
 	return percent
 }
 
-func CalculateCurrentHUDContextUsage(inputTokens int64, cachedInputTokens int64, contextWindow int64) ContextUsage {
+func CalculatePatchedContextUsage(inputTokens int64, cachedInputTokens int64, contextWindow int64) ContextUsage {
 	if contextWindow <= 0 {
 		return ContextUsage{}
 	}

@@ -13,7 +13,7 @@ set -euo pipefail
 CODEX_BIN="${CODEX_CLI_PATH:-codex}"
 # No -size: the binary resolves the size from the config file every second,
 # so changing the file updates the panel live.
-HUD_CMD="codex-vitals -context-mode current-hud -interval 1s"
+HUD_CMD="codex-vitals -context-mode patched -interval 1s"
 
 # Size the pane to the configured size (file > env > m).
 size_file="${XDG_CONFIG_HOME:-$HOME/.config}/codex-vitals/size"

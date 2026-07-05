@@ -61,7 +61,7 @@ go install github.com/WinningBean/codex-vitals/cmd/codex-vitals@latest
 설치 후 `PATH`에 `$GOPATH/bin` 또는 `$HOME/go/bin`이 잡혀 있어야 합니다.
 
 ```bash
-codex-vitals -once -context-mode current-hud -size l
+codex-vitals -once -context-mode patched -size l
 ```
 
 ### 소스에서 직접 빌드
@@ -70,14 +70,14 @@ codex-vitals -once -context-mode current-hud -size l
 git clone https://github.com/WinningBean/codex-vitals.git
 cd codex-vitals
 CGO_ENABLED=0 go build -o codex-vitals ./cmd/codex-vitals
-./codex-vitals -once -context-mode current-hud -size l
+./codex-vitals -once -context-mode patched -size l
 ```
 
 ### 로컬 개발 중 실행
 
 ```bash
 go run ./cmd/codex-vitals -once
-go run ./cmd/codex-vitals -once -context-mode current-hud -size l
+go run ./cmd/codex-vitals -once -context-mode patched -size l
 ```
 
 ---
@@ -170,14 +170,14 @@ codex-vitals -once -size xs   # 또는 s, m, l, xl
 | 모드 | 공식 | 맞추는 대상 |
 |------|------|-------------|
 | `codex` 기본값 | `(total_tokens - 12000) / (model_context_window - 12000)` | stock Codex 상태 표시 |
-| `current-hud` | `(input_tokens + cached_input_tokens) / model_context_window` | 현재 patched Codex build |
+| `patched` | `(input_tokens + cached_input_tokens) / model_context_window` | 현재 patched Codex build |
 
 stock Codex는 system prompt, tools, `/compact` 여유 공간을 위해 baseline `12000` tokens를 예약합니다. 그래서 기본 `codex` 모드는 `total_tokens`와 `model_context_window`에서 각각 `12000`을 차감합니다. window가 `12000` 이하인 작은 모델에서는 raw 비율로 폴백해, 사용률이 `0%`나 `100%`로 잘못 표시되지 않습니다.
 
-숫자가 Codex 표시와 맞지 않는다면 patched Codex build 공식을 쓰고 있을 가능성이 큽니다. 이 경우 `current-hud`를 사용하세요.
+숫자가 Codex 표시와 맞지 않는다면 patched Codex build 공식을 쓰고 있을 가능성이 큽니다. 이 경우 `patched`를 사용하세요.
 
 ```bash
-codex-vitals -once -context-mode current-hud -size l
+codex-vitals -once -context-mode patched -size l
 ```
 
 ---
@@ -192,7 +192,7 @@ codex-vitals -once -context-mode current-hud -size l
     특정 rollout JSONL 파일을 직접 지정
 
 -context-mode string
-    context 사용률 계산 방식: codex 또는 current-hud
+    context 사용률 계산 방식: codex 또는 patched
 
 -size string
     패널 사이즈: xs, s, m, l, xl
@@ -220,7 +220,7 @@ codex-vitals -once -context-mode current-hud -size l
 codex-vitals \
   -once \
   -rollout /path/to/session.jsonl \
-  -context-mode current-hud \
+  -context-mode patched \
   -size l
 ```
 
@@ -256,13 +256,13 @@ CODEX_VITALS_TMUX_HEIGHT=8 scripts/tmux-panel.sh -size xl
 
 ```bash
 # 한 번만 출력
-codex-vitals -once -context-mode current-hud -size l
+codex-vitals -once -context-mode patched -size l
 
 # 1초마다 갱신
-codex-vitals -context-mode current-hud -size l -interval 1s
+codex-vitals -context-mode patched -size l -interval 1s
 
 # 색상 없이 로그/README용으로 출력
-codex-vitals -once -context-mode current-hud -size l --no-color
+codex-vitals -once -context-mode patched -size l --no-color
 ```
 
 ---
@@ -304,7 +304,7 @@ rm ./codex-vitals
 Markdown/채팅 렌더러는 ANSI escape를 색상으로 해석하지 않는 경우가 많습니다. 실제 터미널에서 `--no-color` 없이 실행하면 색상이 보입니다.
 
 **Codex 표시와 숫자가 조금 다릅니다.**
-실시간으로 rollout이 계속 갱신되기 때문에 실행 시점 차이로 token count가 1k 단위로 흔들릴 수 있습니다. Codex 표시와 공식을 맞추려면 `-context-mode current-hud`를 사용하세요.
+실시간으로 rollout이 계속 갱신되기 때문에 실행 시점 차이로 token count가 1k 단위로 흔들릴 수 있습니다. Codex 표시와 공식을 맞추려면 `-context-mode patched`를 사용하세요.
 
 **5H가 left가 아니라 used로 보입니다.**
 현재 Codex 표시와 맞추기 위해 usage limit을 사용률(얼마나 썼는지) 기준으로 보여줍니다. reset 시각은 `l`, `xl` 사이즈의 바 옆에 함께 표시됩니다.

@@ -15,7 +15,7 @@ import (
 func main() {
 	rolloutPath := flag.String("rollout", "", "path to a rollout JSONL file")
 	codexHome := flag.String("codex-home", "", "path to CODEX_HOME; defaults to $CODEX_HOME or ~/.codex")
-	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or current-hud")
+	contextModeValue := flag.String("context-mode", string(vitals.ContextModeCodex), "context usage formula: codex or patched")
 	sizeValue := flag.String("size", "", "panel size: xs, s, m, l, or xl (default: ~/.config/codex-vitals/size, then CODEX_VITALS_SIZE, then m)")
 	noColor := flag.Bool("no-color", false, "disable ANSI colors")
 	interval := flag.Duration("interval", time.Second, "refresh interval")

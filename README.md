@@ -61,7 +61,7 @@ go install github.com/WinningBean/codex-vitals/cmd/codex-vitals@latest
 Make sure `$GOPATH/bin` (or `$HOME/go/bin`) is on your `PATH`, then:
 
 ```bash
-codex-vitals -once -context-mode current-hud -size l
+codex-vitals -once -context-mode patched -size l
 ```
 
 ### Build from source
@@ -70,14 +70,14 @@ codex-vitals -once -context-mode current-hud -size l
 git clone https://github.com/WinningBean/codex-vitals.git
 cd codex-vitals
 CGO_ENABLED=0 go build -o codex-vitals ./cmd/codex-vitals
-./codex-vitals -once -context-mode current-hud -size l
+./codex-vitals -once -context-mode patched -size l
 ```
 
 ### Run during local development
 
 ```bash
 go run ./cmd/codex-vitals -once
-go run ./cmd/codex-vitals -once -context-mode current-hud -size l
+go run ./cmd/codex-vitals -once -context-mode patched -size l
 ```
 
 ---
@@ -170,14 +170,14 @@ codex-vitals -once -size xs   # or s, m, l, xl
 | Mode | Formula | Matches |
 |------|---------|---------|
 | `codex` (default) | `(total_tokens − 12000) / (model_context_window − 12000)` | stock Codex status line |
-| `current-hud` | `(input_tokens + cached_input_tokens) / model_context_window` | a patched Codex build |
+| `patched` | `(input_tokens + cached_input_tokens) / model_context_window` | a patched Codex build |
 
 Stock Codex reserves a `12000`-token baseline (system prompt, tools, and room to run `/compact`), so the default `codex` mode subtracts `12000` from both `total_tokens` and `model_context_window`. For small models whose window is `≤ 12000`, it falls back to the raw bounded ratio so usage is never reported as a misleading `0%` or `100%`.
 
-If the number doesn't match what Codex shows, you're probably on a patched Codex build — use `current-hud`:
+If the number doesn't match what Codex shows, you're probably on a patched Codex build — use `patched`:
 
 ```bash
-codex-vitals -once -context-mode current-hud -size l
+codex-vitals -once -context-mode patched -size l
 ```
 
 ---
@@ -192,7 +192,7 @@ codex-vitals -once -context-mode current-hud -size l
     Use a specific rollout JSONL file directly
 
 -context-mode string
-    Context usage formula: codex or current-hud
+    Context usage formula: codex or patched
 
 -size string
     panel size: xs, s, m, l, xl
@@ -218,7 +218,7 @@ The default size lives in `~/.config/codex-vitals/size` (write it with the insta
 codex-vitals \
   -once \
   -rollout /path/to/session.jsonl \
-  -context-mode current-hud \
+  -context-mode patched \
   -size l
 ```
 
@@ -254,13 +254,13 @@ The pane height auto-fits the size; override it with `CODEX_VITALS_TMUX_HEIGHT`.
 
 ```bash
 # render once
-codex-vitals -once -context-mode current-hud -size l
+codex-vitals -once -context-mode patched -size l
 
 # refresh every second
-codex-vitals -context-mode current-hud -size l -interval 1s
+codex-vitals -context-mode patched -size l -interval 1s
 
 # no color, for logs / README
-codex-vitals -once -context-mode current-hud -size l --no-color
+codex-vitals -once -context-mode patched -size l --no-color
 ```
 
 ---
@@ -302,7 +302,7 @@ rm ./codex-vitals
 Markdown / chat renderers usually don't interpret ANSI escapes as colors. Run it in a real terminal without `--no-color` to see them.
 
 **The number differs slightly from what Codex shows.**
-Rollouts update live, so token counts can shift by ~1k depending on when you run. To match Codex's own formula, use `-context-mode current-hud`.
+Rollouts update live, so token counts can shift by ~1k depending on when you run. To match Codex's own formula, use `-context-mode patched`.
 
 **5H shows used, not left.**
 The panel shows usage limits as used-percent (how much of the window you've spent) to match a running Codex build. Reset times are shown next to the `l` and `xl` bars.

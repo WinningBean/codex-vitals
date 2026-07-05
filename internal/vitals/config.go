@@ -142,7 +142,7 @@ func SelectModel(turn ModelInfo, config Config) ModelInfo {
 }
 
 func SelectModelForContextMode(turn ModelInfo, config Config, mode ContextMode) ModelInfo {
-	if mode == ContextModeCurrentHUD && turn.HasTurn {
+	if mode == ContextModePatched && turn.HasTurn {
 		return turn
 	}
 	return SelectModel(turn, config)

@@ -82,7 +82,7 @@ func TestSelectModelKeepsNewerTurnContext(t *testing.T) {
 	}
 }
 
-func TestSelectModelForContextModeCurrentHUDKeepsTurnContext(t *testing.T) {
+func TestSelectModelForContextModePatchedKeepsTurnContext(t *testing.T) {
 	turnTime := time.Date(2026, time.July, 3, 9, 0, 0, 0, time.UTC)
 	turn := ModelInfo{
 		Model:     "gpt-5.5",
@@ -96,7 +96,7 @@ func TestSelectModelForContextModeCurrentHUDKeepsTurnContext(t *testing.T) {
 		MTime:  turnTime.Add(time.Hour),
 	}
 
-	got := SelectModelForContextMode(turn, config, ContextModeCurrentHUD)
+	got := SelectModelForContextMode(turn, config, ContextModePatched)
 	if got != turn {
 		t.Fatalf("SelectModelForContextMode() = %+v, want %+v", got, turn)
 	}
