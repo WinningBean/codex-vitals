@@ -115,7 +115,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 ```text
 🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
 📂 ~/Documents/Github/codex-vitals 🌿(main)
-🧠 Context ███████████████░░░░░░░░░░░░░░░ 49% used
+🧠 Context  ███████████████░░░░░░░░░░░░░░░ 49% used
 🚀 Usage 5H ███████░░░ 67% │ 📅 7D ████░░░░░░ 42%
 ```
 
@@ -124,7 +124,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 ```text
 🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
 📂 ~/Documents/Github/codex-vitals 🌿(main) │ 🧾 2.1M tokens │ ⏰ 42m
-🧠 Context ██████████░░░░░░░░░░ 49% used (126k/258k)
+🧠 Context  ██████████░░░░░░░░░░ 49% used (126k/258k)
 🚀 Usage 5H █████████████░░░░░░░ 67% (Reset 2h33m left)
 📅 Usage 7D ████████░░░░░░░░░░░░ 42% (Reset Fri 16:45)
 ```
@@ -134,7 +134,7 @@ go run ./cmd/codex-vitals -once -context-mode current-hud -size l
 ```text
 🤖 gpt-5.5 ⚡xhigh │ ✅ clean │ no env
 📂 ~/Documents/Github/codex-vitals 🌿(main) │ 🧾 2.1M tokens │ ⏰ 42m
-🧠 Context ████████████████████░░░░░░░░░░░░░░░░░░░░ 49% used (126k/258k)
+🧠 Context  ████████████████████░░░░░░░░░░░░░░░░░░░░ 49% used (126k/258k)
 🚀 Usage 5H ███████████████████████████░░░░░░░░░░░░░ 67% (Reset 2h33m left)
 📅 Usage 7D █████████████████░░░░░░░░░░░░░░░░░░░░░░░ 42% (Reset Fri 16:45)
 ```

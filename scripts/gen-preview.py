@@ -84,7 +84,7 @@ def size_m():
     return [
         head_line(),
         [("📂 ", DIM), ("~/Documents/Github/codex-vitals", PATH), (" ", DIM), ("🌿(main)", GREEN)],
-        [("🧠 ", DIM), ("Context", PINK), (" ", DIM)] + bar_segments(CTX, 30, "context") +
+        [("🧠 ", DIM), ("Context ", PINK), (" ", DIM)] + bar_segments(CTX, 30, "context") +
         [(" ", DIM)] + pct(CTX, "context") + [(" ", DIM), ("used", DIM)],
         [("🚀 ", DIM), ("Usage 5H", BLUE), (" ", DIM)] + bar_segments(H5, 10, "default") +
         [(" ", DIM)] + pct(H5, "default") + [(" │ ", DIM), ("📅 ", DIM), ("7D", YELLOW), (" ", DIM)] +
@@ -96,7 +96,7 @@ def size_large(width):
         head_line(),
         [("📂 ", DIM), ("~/Documents/Github/codex-vitals", PATH), (" ", DIM), ("🌿(main)", GREEN),
          (" │ 🧾 ", DIM), ("2.1M tokens", PEACH), (" │ ", DIM), ("⏰ 42m", DIM)],
-        [("🧠 ", DIM), ("Context", PINK), (" ", DIM)] + bar_segments(CTX, width, "context") +
+        [("🧠 ", DIM), ("Context ", PINK), (" ", DIM)] + bar_segments(CTX, width, "context") +
         [(" ", DIM)] + pct(CTX, "context", "used") + [(" ", DIM), ("(126k/258k)", DIM)],
         [("🚀 ", DIM), ("Usage 5H", BLUE), (" ", DIM)] + bar_segments(H5, width, "default") +
         [(" ", DIM)] + pct(H5, "default") + [(" ", DIM), ("(Reset 2h33m left)", DIM)],
