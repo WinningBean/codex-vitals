@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -59,6 +60,10 @@ type LoadOptions struct {
 	CodexHome   string
 	RolloutPath string
 	ContextMode ContextMode
+	// CWD ties the panel to the session started in this directory, so a panel
+	// paired with one Codex doesn't show a different, more-recently-written
+	// session. Empty means "just take the globally latest rollout".
+	CWD string
 }
 
 func LoadSnapshot(options LoadOptions) (Snapshot, error) {
@@ -69,7 +74,7 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 
 	rolloutPath := options.RolloutPath
 	if rolloutPath == "" {
-		rolloutPath, err = FindLatestRollout(options.CodexHome)
+		rolloutPath, err = FindLatestRollout(options.CodexHome, options.CWD)
 		if err != nil {
 			return Snapshot{
 				Model:  SelectModel(ModelInfo{}, config),
@@ -88,16 +93,15 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 	return snapshot, nil
 }
 
-func FindLatestRollout(codexHome string) (string, error) {
+func FindLatestRollout(codexHome, cwd string) (string, error) {
 	sessionsDir := filepath.Join(codexHome, "sessions")
-	var latestPath string
-	var latestTime time.Time
-
+	type rolloutFile struct {
+		path  string
+		mtime time.Time
+	}
+	var files []rolloutFile
 	err := filepath.WalkDir(sessionsDir, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if entry.IsDir() {
+		if err != nil || entry.IsDir() {
 			return nil
 		}
 		name := entry.Name()
@@ -108,10 +112,7 @@ func FindLatestRollout(codexHome string) (string, error) {
 		if err != nil {
 			return nil
 		}
-		if latestPath == "" || info.ModTime().After(latestTime) {
-			latestPath = path
-			latestTime = info.ModTime()
-		}
+		files = append(files, rolloutFile{path, info.ModTime()})
 		return nil
 	})
 	if err != nil {
@@ -120,10 +121,44 @@ func FindLatestRollout(codexHome string) (string, error) {
 		}
 		return "", err
 	}
-	if latestPath == "" {
+	if len(files) == 0 {
 		return "", ErrNoRollout
 	}
-	return latestPath, nil
+	sort.Slice(files, func(i, j int) bool { return files[i].mtime.After(files[j].mtime) })
+
+	// Prefer the most recent rollout started in cwd, so a panel paired with one
+	// Codex isn't hijacked by another session that happens to write more often.
+	if cwd != "" {
+		const scan = 50
+		for i := 0; i < len(files) && i < scan; i++ {
+			if rolloutCWD(files[i].path) == cwd {
+				return files[i].path, nil
+			}
+		}
+	}
+	return files[0].path, nil
+}
+
+// rolloutCWD returns the session cwd recorded in a rollout's session_meta line.
+func rolloutCWD(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+	line, err := bufio.NewReader(file).ReadString('\n')
+	if err != nil && line == "" {
+		return ""
+	}
+	var record struct {
+		Payload struct {
+			CWD string `json:"cwd"`
+		} `json:"payload"`
+	}
+	if json.Unmarshal([]byte(line), &record) != nil {
+		return ""
+	}
+	return record.Payload.CWD
 }
 
 func ParseRolloutFile(path string) (Snapshot, error) {

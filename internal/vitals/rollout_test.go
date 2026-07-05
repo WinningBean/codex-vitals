@@ -108,7 +108,7 @@ func TestFindLatestRollout(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := FindLatestRollout(root)
+	got, err := FindLatestRollout(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -218,5 +218,34 @@ func TestParseRolloutSkipsBadLines(t *testing.T) {
 	}
 	if !got.Tokens.HasTokens {
 		t.Fatalf("token data lost when the last line was partial")
+	}
+}
+
+// The panel must follow its own session (cwd), not whichever rollout is newest.
+func TestFindLatestRolloutPrefersCWD(t *testing.T) {
+	home := t.TempDir()
+	write := func(name, cwd string, mtime time.Time) string {
+		p := filepath.Join(home, "sessions", "2026", "07", "05", name)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, []byte(`{"type":"session_meta","payload":{"cwd":"`+cwd+`"}}`+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(p, mtime, mtime); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	mine := write("rollout-a.jsonl", "/work/mine", time.Now().Add(-time.Hour))
+	write("rollout-b.jsonl", "/work/other", time.Now()) // newer, different session
+
+	got, err := FindLatestRollout(home, "/work/mine")
+	if err != nil || got != mine {
+		t.Fatalf("cwd match = %q (err %v), want %q", got, err, mine)
+	}
+	// No cwd falls back to the globally newest.
+	if got, _ := FindLatestRollout(home, ""); filepath.Base(got) != "rollout-b.jsonl" {
+		t.Fatalf("global latest = %q, want rollout-b.jsonl", got)
 	}
 }

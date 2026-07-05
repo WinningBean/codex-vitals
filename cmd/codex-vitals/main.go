@@ -55,10 +55,12 @@ func main() {
 	if err != nil {
 		exitErr(err)
 	}
+	cwd, _ := os.Getwd()
 	options := vitals.LoadOptions{
 		CodexHome:   *codexHome,
 		RolloutPath: *rolloutPath,
 		ContextMode: contextMode,
+		CWD:         cwd,
 	}
 	if *once {
 		fmt.Println(render(options, homeDir, newRenderOptions(resolveSize(explicitPtr), !*noColor, *marginValue)))
