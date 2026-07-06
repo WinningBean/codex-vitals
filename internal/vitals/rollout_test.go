@@ -76,8 +76,9 @@ func TestParseRolloutPatchedContextMode(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// input_tokens only (cached is a subset, not added on top).
 	want := ContextUsage{
-		UsedTokens:  71000,
+		UsedTokens:  70000,
 		TotalTokens: 258400,
 		Percent:     27,
 	}

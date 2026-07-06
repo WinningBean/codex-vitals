@@ -112,7 +112,12 @@ func CalculatePatchedContextUsage(inputTokens int64, cachedInputTokens int64, co
 		return ContextUsage{}
 	}
 
-	used := max(inputTokens, 0) + max(cachedInputTokens, 0)
+	// cached_input_tokens is the cached portion *of* input_tokens, not a separate
+	// bucket, so input_tokens already reflects the full context occupancy. Adding
+	// cached on top double-counts it and saturates the gauge to ~100% at roughly
+	// half the real fill — most visibly when attaching to a resumed session.
+	_ = cachedInputTokens
+	used := max(inputTokens, 0)
 	if used > contextWindow {
 		used = contextWindow
 	}

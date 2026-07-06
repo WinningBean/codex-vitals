@@ -172,9 +172,11 @@ codex-vitals -once -size xs   # or s, m, l, xl
 | Mode | Formula | Matches |
 |------|---------|---------|
 | `codex` (default) | `(total_tokens − 12000) / (model_context_window − 12000)` | stock Codex status line |
-| `patched` | `(input_tokens + cached_input_tokens) / model_context_window` | a patched Codex build |
+| `patched` | `input_tokens / model_context_window` | a patched Codex build |
 
 Stock Codex reserves a `12000`-token baseline (system prompt, tools, and room to run `/compact`), so the default `codex` mode subtracts `12000` from both `total_tokens` and `model_context_window`. For small models whose window is `≤ 12000`, it falls back to the raw bounded ratio so usage is never reported as a misleading `0%` or `100%`.
+
+`cached_input_tokens` is the cached portion *of* `input_tokens`, not a separate bucket, so `patched` uses `input_tokens` alone — adding the cached count on top would double-count it and saturate the gauge to `100%` at roughly half the real fill.
 
 If the number doesn't match what Codex shows, you're probably on a patched Codex build — use `patched`:
 
