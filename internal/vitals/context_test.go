@@ -156,6 +156,32 @@ func TestCalculatePatchedContextUsageDoesNotDoubleCountCache(t *testing.T) {
 	}
 }
 
+// Removing the cache double-count must not break the legitimately-full case:
+// when input_tokens alone meets or exceeds the window, the gauge still clamps
+// to 100% and reports the window as used.
+func TestCalculatePatchedContextUsageClampsWhenFull(t *testing.T) {
+	got := CalculatePatchedContextUsage(
+		/*inputTokens*/ 300000,
+		/*cachedInputTokens*/ 50000,
+		/*contextWindow*/ 258400,
+	)
+	want := ContextUsage{
+		UsedTokens:  258400,
+		TotalTokens: 258400,
+		Percent:     100,
+	}
+	if got != want {
+		t.Fatalf("CalculatePatchedContextUsage() = %+v, want %+v", got, want)
+	}
+}
+
+// A non-positive window has no meaningful ratio, so usage is empty (no 0/0).
+func TestCalculatePatchedContextUsageZeroWindow(t *testing.T) {
+	if got := CalculatePatchedContextUsage(70000, 1000, 0); got != (ContextUsage{}) {
+		t.Fatalf("zero window = %+v, want empty", got)
+	}
+}
+
 func TestParseContextMode(t *testing.T) {
 	// "patched" is canonical; "current-hud" stays as a back-compat alias.
 	for _, in := range []string{"patched", "current-hud"} {

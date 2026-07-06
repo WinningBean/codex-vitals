@@ -14,6 +14,10 @@ func TestDisplayWidth(t *testing.T) {
 		{"emoji with label", "🧠 Context", 2 + 1 + 7},
 		{"box drawing stays one", "│██░░", 5},
 		{"panel emojis are wide", "🤖📂🌿🚀📅📝🐍🧾⚡✅⏰", 22},
+		// VS16 (U+FE0F) is a zero-width presentation selector; an emoji + VS16
+		// must still measure 2, or wrap math would over-count.
+		{"emoji with variation selector", "⚡️", 2},
+		{"lone escape is ignored", "a\x1bb", 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -50,5 +54,10 @@ func TestFrameRows(t *testing.T) {
 	// "🧠🧠🧠" is width 6; at width 4 -> ceil(6/4) = 2 rows.
 	if got := frameRows("🧠🧠🧠", 4); got != 2 {
 		t.Fatalf("emoji wrap rows = %d, want 2", got)
+	}
+
+	// A blank line between two lines still occupies one row.
+	if got := frameRows("a\n\nb", 80); got != 3 {
+		t.Fatalf("blank-line rows = %d, want 3", got)
 	}
 }
