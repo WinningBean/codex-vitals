@@ -172,9 +172,11 @@ codex-vitals -once -size xs   # 또는 s, m, l, xl
 | 모드 | 공식 | 맞추는 대상 |
 |------|------|-------------|
 | `codex` 기본값 | `(total_tokens - 12000) / (model_context_window - 12000)` | stock Codex 상태 표시 |
-| `patched` | `(input_tokens + cached_input_tokens) / model_context_window` | 현재 patched Codex build |
+| `patched` | `input_tokens / model_context_window` | 현재 patched Codex build |
 
 stock Codex는 system prompt, tools, `/compact` 여유 공간을 위해 baseline `12000` tokens를 예약합니다. 그래서 기본 `codex` 모드는 `total_tokens`와 `model_context_window`에서 각각 `12000`을 차감합니다. window가 `12000` 이하인 작은 모델에서는 raw 비율로 폴백해, 사용률이 `0%`나 `100%`로 잘못 표시되지 않습니다.
+
+`cached_input_tokens`는 별도 버킷이 아니라 `input_tokens`에 이미 포함된 캐시 부분입니다. 따라서 `patched`는 `input_tokens`만 사용합니다 — 캐시를 더하면 이중 계산이 되어 실제 사용량의 약 절반에서 게이지가 `100%`로 포화됩니다.
 
 숫자가 Codex 표시와 맞지 않는다면 patched Codex build 공식을 쓰고 있을 가능성이 큽니다. 이 경우 `patched`를 사용하세요.
 

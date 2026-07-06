@@ -119,15 +119,37 @@ func TestCalculateContextUsage(t *testing.T) {
 }
 
 func TestCalculatePatchedContextUsage(t *testing.T) {
+	// cached_input_tokens is a subset of input_tokens (the cached portion of the
+	// same prompt), so input_tokens alone is the full context occupancy; adding
+	// cached again would double-count it.
 	got := CalculatePatchedContextUsage(
 		/*inputTokens*/ 119642,
 		/*cachedInputTokens*/ 116608,
 		/*contextWindow*/ 258400,
 	)
 	want := ContextUsage{
-		UsedTokens:  236250,
+		UsedTokens:  119642,
 		TotalTokens: 258400,
-		Percent:     91,
+		Percent:     46,
+	}
+	if got != want {
+		t.Fatalf("CalculatePatchedContextUsage() = %+v, want %+v", got, want)
+	}
+}
+
+// A resumed (or already-running) session reports a large input_tokens whose
+// bulk is cached. Double-counting the cache saturated the gauge to 100% at
+// roughly half the real fill — the "context shows 100% at startup" bug.
+func TestCalculatePatchedContextUsageDoesNotDoubleCountCache(t *testing.T) {
+	got := CalculatePatchedContextUsage(
+		/*inputTokens*/ 130000,
+		/*cachedInputTokens*/ 128000,
+		/*contextWindow*/ 258400,
+	)
+	want := ContextUsage{
+		UsedTokens:  130000,
+		TotalTokens: 258400,
+		Percent:     50,
 	}
 	if got != want {
 		t.Fatalf("CalculatePatchedContextUsage() = %+v, want %+v", got, want)
