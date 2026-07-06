@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/WinningBean/codex-vitals/internal/vitals"
@@ -76,7 +75,10 @@ func main() {
 	renderOptions := newRenderOptions(resolveSize(explicitPtr), !*noColor, *marginValue)
 	frame := render(options, homeDir, renderOptions)
 	fmt.Print(frame)
-	prevLines := strings.Count(frame, "\n") + 1
+	// Track physical rows (not logical lines): a line wider than the terminal
+	// wraps onto extra rows, and counting only "\n" would move the cursor up too
+	// little on redraw, leaving stale rows that pile up over time.
+	prevRows := frameRows(frame, terminalWidth())
 	for {
 		select {
 		case <-ticker.C:
@@ -86,12 +88,12 @@ func main() {
 			// it, so multi-line output redraws in place instead of scrolling.
 			// Emitted together with the new frame in one write to avoid flicker.
 			clear := "\r\033[2K"
-			if prevLines > 1 {
-				clear = fmt.Sprintf("\r\033[%dA\033[J", prevLines-1)
+			if prevRows > 1 {
+				clear = fmt.Sprintf("\r\033[%dA\033[J", prevRows-1)
 			}
 			frame = render(options, homeDir, renderOptions)
 			fmt.Print(clear + frame)
-			prevLines = strings.Count(frame, "\n") + 1
+			prevRows = frameRows(frame, terminalWidth())
 		case <-signals:
 			fmt.Println()
 			return
