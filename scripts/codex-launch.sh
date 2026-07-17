@@ -17,7 +17,7 @@ CODEX_BIN="${CODEX_CLI_PATH:-codex}"
 SINCE="${CODEX_VITALS_SINCE:-$(date +%s)}"
 # No -size: the binary resolves the size from the config file every second,
 # so changing the file updates the panel live.
-HUD_CMD="CODEX_VITALS_SINCE=$SINCE codex-vitals -context-mode patched -margin ${CODEX_VITALS_MARGIN:-2} -interval 1s"
+HUD_CMD="CODEX_VITALS_SINCE=$SINCE codex-vitals -context-mode codex -margin ${CODEX_VITALS_MARGIN:-2} -interval 1s"
 
 # Size the pane to the configured size (file > env > m).
 size_file="${XDG_CONFIG_HOME:-$HOME/.config}/codex-vitals/size"

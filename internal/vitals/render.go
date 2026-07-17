@@ -148,11 +148,9 @@ func renderXS(s Snapshot, home string, color bool) string {
 	}
 
 	l2 := []string{"🧠 " + bar(s.Tokens.Context.Percent, 10, "context", color)}
-	if s.Tokens.Primary != nil {
-		l2 = append(l2, "🚀 "+bar(pct(s.Tokens.Primary), 10, "default", color))
-	}
-	if s.Tokens.Secondary != nil {
-		l2 = append(l2, "📅 "+bar(pct(s.Tokens.Secondary), 10, "7d", color))
+	for _, rl := range activeLimits(s.Tokens) {
+		st := styleForLimit(rl)
+		l2 = append(l2, st.icon+" "+bar(pct(rl), 10, st.barKind, color))
 	}
 	return strings.Join(l1, " ") + "\n" + strings.Join(l2, "  ")
 }
@@ -172,11 +170,9 @@ func renderS(s Snapshot, home string, color bool) string {
 	}
 
 	g2 := []string{labeledBar("🧠", "Context", s.Tokens.Context.Percent, 10, "context", cCtx, color)}
-	if s.Tokens.Primary != nil {
-		g2 = append(g2, labeledBar("🚀", "5H", pct(s.Tokens.Primary), 10, "default", c5H, color))
-	}
-	if s.Tokens.Secondary != nil {
-		g2 = append(g2, labeledBar("📅", "7D", pct(s.Tokens.Secondary), 10, "7d", c7D, color))
+	for _, rl := range activeLimits(s.Tokens) {
+		st := styleForLimit(rl)
+		g2 = append(g2, labeledBar(st.icon, st.label, pct(rl), 10, st.barKind, st.labelColor, color))
 	}
 	return strings.Join(g1, pipe(color)) + "\n" + strings.Join(g2, pipe(color))
 }
@@ -217,11 +213,9 @@ func renderM(s Snapshot, home string, color bool) string {
 		lines = append(lines, line)
 	}
 	var usage []string
-	if s.Tokens.Primary != nil {
-		usage = append(usage, labeledBar("🚀", "Usage 5H", pct(s.Tokens.Primary), 10, "default", c5H, color))
-	}
-	if s.Tokens.Secondary != nil {
-		usage = append(usage, labeledBar("📅", "7D", pct(s.Tokens.Secondary), 10, "7d", c7D, color))
+	for _, rl := range activeLimits(s.Tokens) {
+		st := styleForLimit(rl)
+		usage = append(usage, labeledBar(st.icon, "Usage "+st.label, pct(rl), 10, st.barKind, st.labelColor, color))
 	}
 	if len(usage) > 0 {
 		lines = append(lines, strings.Join(usage, pipe(color)))
@@ -263,18 +257,70 @@ func renderLarge(s Snapshot, home string, color bool, barWidth int) string {
 		}
 		lines = append(lines, usageLine("🧠", "Context", c.Percent, barWidth, "context", cCtx, suffix, extra, color))
 	}
-	if s.Tokens.Primary != nil {
-		lines = append(lines, usageLine("🚀", "Usage 5H", pct(s.Tokens.Primary), barWidth, "default", c5H,
-			"", formatReset(s.Tokens.Primary, "left"), color))
-	}
-	if s.Tokens.Secondary != nil {
-		lines = append(lines, usageLine("📅", "Usage 7D", pct(s.Tokens.Secondary), barWidth, "7d", c7D,
-			"", formatReset(s.Tokens.Secondary, "datetime"), color))
+	for _, rl := range activeLimits(s.Tokens) {
+		st := styleForLimit(rl)
+		lines = append(lines, usageLine(st.icon, "Usage "+st.label, pct(rl), barWidth, st.barKind, st.labelColor,
+			"", formatReset(rl, st.resetMode), color))
 	}
 	return strings.Join(lines, "\n")
 }
 
 // --- building blocks -------------------------------------------------------
+
+// activeLimits returns the rate-limit gauges Codex is currently reporting, in
+// slot order (primary then secondary). Codex has changed which rolling windows
+// it sends over time — it dropped the 5h limit and now reports only the weekly
+// one — so callers must not assume a fixed slot maps to a fixed window.
+func activeLimits(t TokenInfo) []*RateLimit {
+	var out []*RateLimit
+	if t.Primary != nil {
+		out = append(out, t.Primary)
+	}
+	if t.Secondary != nil {
+		out = append(out, t.Secondary)
+	}
+	return out
+}
+
+// limitStyle is how a rate-limit gauge is drawn. It is chosen from the limit's
+// rolling window rather than its slot, so the icon/label/color track the real
+// window even as Codex adds or drops limits.
+type limitStyle struct {
+	icon       string
+	label      string // short window label, e.g. "5H", "7D"
+	barKind    string // color ramp key for bar()/pctText()
+	labelColor rgb
+	resetMode  string // formatReset mode: "left" or "datetime"
+}
+
+// styleForLimit maps a rate limit to its display style by window length: short
+// windows (<=6h) render as the rocket "5H" gauge, week-or-longer windows as the
+// calendar "7D" gauge, anything else generically.
+func styleForLimit(rl *RateLimit) limitStyle {
+	switch {
+	case rl.WindowMinutes > 0 && rl.WindowMinutes <= 360:
+		return limitStyle{"🚀", windowLabel(rl.WindowMinutes), "default", c5H, "left"}
+	case rl.WindowMinutes >= 10080:
+		return limitStyle{"📅", windowLabel(rl.WindowMinutes), "7d", c7D, "datetime"}
+	default:
+		return limitStyle{"⏱", windowLabel(rl.WindowMinutes), "default", c5H, "left"}
+	}
+}
+
+// windowLabel turns a rolling-window length in minutes into a compact label:
+// 300 -> "5H", 10080 -> "7D", 600 -> "10H", falling back to raw minutes.
+func windowLabel(minutes int) string {
+	switch {
+	case minutes <= 0:
+		return "Limit"
+	case minutes%1440 == 0:
+		return fmt.Sprintf("%dD", minutes/1440)
+	case minutes%60 == 0:
+		return fmt.Sprintf("%dH", minutes/60)
+	default:
+		return fmt.Sprintf("%dM", minutes)
+	}
+}
 
 // labeledBar: "icon Label ██░ N%" (icon optional). Used by s and m.
 func labeledBar(icon, label string, percent, width int, kind string, labelColor rgb, color bool) string {

@@ -46,7 +46,7 @@ func TestRenderLineDefaultsToMedium(t *testing.T) {
 	want := "🤖 gpt-5.5 ⚡xhigh │ no git │ no env\n" +
 		"📂 ~/my-project 🌿(main)\n" +
 		"🧠 Context  ████████░░░░░░░░░░░░░░░░░░░░░░░░ 25% used\n" +
-		"🚀 Usage 5H ░░░░░░░░░░ 1% │ 📅 7D ███░░░░░░░ 26%"
+		"🚀 Usage 5H ░░░░░░░░░░ 1% │ 📅 Usage 7D ███░░░░░░░ 26%"
 	if got != want {
 		t.Fatalf("RenderLine() =\n%q\nwant\n%q", got, want)
 	}

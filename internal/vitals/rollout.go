@@ -103,11 +103,17 @@ func LoadSnapshot(options LoadOptions) (Snapshot, error) {
 	return snapshot, nil
 }
 
-// carryRateLimits fills in the account-wide 5h/weekly limits from the most
-// recent rollout of any session when the current one hasn't reported them yet,
-// so those gauges show real values from the start instead of popping in.
+// carryRateLimits fills in the account-wide rate limits from the most recent
+// rollout of any session when the current one hasn't reported them yet, so
+// those gauges show real values from the start instead of popping in.
+//
+// Codex sends every active limit together in one token_count, so a present
+// primary means the current snapshot already has the full set — even when
+// secondary is legitimately absent (Codex now reports only a weekly window).
+// Keying the early return on the primary alone avoids re-scanning prior
+// sessions every tick chasing a secondary that will never arrive.
 func carryRateLimits(snap *Snapshot, options LoadOptions) {
-	if snap.Tokens.Primary != nil && snap.Tokens.Secondary != nil {
+	if snap.Tokens.Primary != nil {
 		return
 	}
 	files, err := collectRollouts(options.CodexHome)
